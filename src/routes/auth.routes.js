@@ -3,7 +3,15 @@
 // En este caso, solo tendremos una ruta para el login.
 
 const { Router } = require('express');
-const { loginController } = require('../controllers/auth.controller');
+const { 
+  loginController, 
+  registerCredentialsController,
+  registerProfileController,
+  forgotPasswordController,
+  resetPasswordController,
+  verifyOtpController
+} = require('../controllers/auth.controller');
+const { authenticateToken } = require('../middleware/auth.middleware');
 
 // --- Inicialización del Router ---
 // `router`: Es una instancia del enrutador de Express.
@@ -15,6 +23,24 @@ const router = Router();
 // Se usa POST porque el cliente envía datos sensibles (credenciales) en el cuerpo de la petición.
 // `loginController`: Es la función del controlador que se ejecutará cuando se reciba una petición en esta ruta.
 router.post('/login', loginController);
+
+// --- Definición de la Ruta de Registro (Paso 1) ---
+router.post('/register/credentials', registerCredentialsController);
+
+// --- Definición de la Ruta de Registro (Paso 2) ---
+// Esta ruta está protegida por el middleware `authenticateToken`.
+// Solo se puede acceder con un token JWT válido (el temporal en este caso).
+router.post('/register/profile', authenticateToken, registerProfileController);
+
+// --- Definición de la Ruta para Solicitar Recuperación de Contraseña ---
+router.post('/forgot-password', forgotPasswordController);
+
+// --- Definición de la Ruta para Verificar el Código OTP ---
+router.post('/verify-otp', verifyOtpController);
+
+// --- Definición de la Ruta para Resetear la Contraseña ---
+// Ahora está protegida y usa el token JWT temporal generado por /verify-otp
+router.post('/reset-password', authenticateToken, resetPasswordController);
 
 // --- Exportación ---
 // Exportamos el router para poder usarlo en `src/index.js`.

@@ -93,9 +93,46 @@ const findUserByEmail = async (email) => {
 };
 
 
+// --- Nueva Función para Buscar Usuario por Token de Reseteo ---
+const findUserByResetToken = async (token) => {
+  try {
+    const rows = await getSheetData(process.env.SPREADSHEET_ID, 'Login');
+    if (!rows || rows.length <= 1) return null;
+
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+    // El índice de la columna 'resetToken' (asumimos que es la columna I, índice 8)
+    const tokenColumnIndex = headers.indexOf('resetToken');
+    if (tokenColumnIndex === -1) {
+      console.error("La columna 'resetToken' no se encontró en la hoja de cálculo.");
+      return null;
+    }
+
+    const userRowIndex = dataRows.findIndex(row => row[tokenColumnIndex] === token);
+
+    if (userRowIndex === -1) {
+      return null; // Usuario no encontrado
+    }
+
+    const userRow = dataRows[userRowIndex];
+    const user = {};
+    headers.forEach((header, index) => {
+      user[header] = userRow[index] || '';
+    });
+
+    return { user, rowIndex: userRowIndex + 2 };
+
+  } catch (error) {
+    console.error('Error al buscar usuario por token de reseteo:', error);
+    return null;
+  }
+};
+
+
 module.exports = {
   getSheetData,
   appendSheetData,
   findUserByEmail,
   updateCell,
+  findUserByResetToken,
 };
