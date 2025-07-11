@@ -1,35 +1,27 @@
 // --- Explicación del Archivo ---
-// Este archivo contiene "middlewares" de Express relacionados con la autenticación.
-// Un middleware es una función que se ejecuta antes del controlador de la ruta
-// y puede modificar los objetos de petición (req) y respuesta (res), o terminar el ciclo.
+// Middleware para la autenticación. La funcionalidad principal es la misma,
+// pero se han mejorado los mensajes de error para que sean más descriptivos.
 
 const jwt = require('jsonwebtoken');
 
-// --- Middleware para Verificar JWT ---
-// `authenticateToken`: Verifica que la petición contenga un token JWT válido.
 const authenticateToken = (req, res, next) => {
-  // `authHeader`: Buscamos el token en la cabecera 'Authorization'.
-  // El formato estándar es "Bearer TOKEN".
   const authHeader = req.headers['authorization'];
-  // Extraemos el token de la cabecera.
   const token = authHeader && authHeader.split(' ')[1];
 
   if (token == null) {
-    // Si no hay token, devolvemos un error 401 (No autorizado).
-    return res.sendStatus(401);
+    // MEJORA: Enviar un mensaje JSON en lugar de solo el estado.
+    // Esto ayuda al frontend a saber exactamente qué salió mal.
+    return res.status(401).json({ message: 'Acceso no autorizado. Token no proporcionado.' });
   }
 
-  // `jwt.verify`: Comprueba la validez y firma del token.
-  // Si el token es inválido o ha expirado, lanzará un error.
   jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
     if (err) {
-      // Si hay un error en la verificación, devolvemos un error 403 (Prohibido).
-      return res.sendStatus(403);
+      // MEJORA: Mensaje específico si el token es inválido o ha expirado.
+      return res.status(403).json({ message: 'Acceso prohibido. El token es inválido o ha expirado.' });
     }
-    // Si el token es válido, añadimos el payload del token (`user`)
-    // al objeto `req` para que los siguientes middlewares o controladores puedan usarlo.
+    
+    // La lógica principal no cambia: el usuario se adjunta a la petición.
     req.user = user;
-    // `next()`: Pasa el control al siguiente middleware o al controlador de la ruta.
     next();
   });
 };
