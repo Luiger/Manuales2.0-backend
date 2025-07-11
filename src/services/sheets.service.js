@@ -37,13 +37,11 @@ const appendSheetData = async (spreadsheetId, sheetName, rowData) => {
   }
 };
 
-// --- Nueva Función para Actualizar una Celda ---
-// `updateCell`: Escribe un valor en una celda específica de la hoja.
 const updateCell = async (spreadsheetId, sheetName, range, value) => {
   try {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
-      range: `${sheetName}!${range}`, // ej: Login!A5
+      range: `${sheetName}!${range}`,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[value]],
@@ -56,74 +54,60 @@ const updateCell = async (spreadsheetId, sheetName, range, value) => {
   }
 };
 
-
-// --- Función Modificada para Buscar Usuario por Email ---
-// Ahora devuelve tanto el usuario como el índice de su fila.
 const findUserByEmail = async (email) => {
   try {
-    const rows = await getSheetData(process.env.SPREADSHEET_ID, 'Login');
-    if (!rows || rows.length <= 1) return null;
-
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
-    const emailColumnIndex = headers.indexOf('Usuario');
-    if (emailColumnIndex === -1) return null;
-
-    // `findIndex` nos da la posición del elemento en el array.
-    const userRowIndex = dataRows.findIndex(row => row[emailColumnIndex] === email);
-
-    if (userRowIndex === -1) {
-      return null; // Usuario no encontrado
-    }
-
-    const userRow = dataRows[userRowIndex];
-    const user = {};
-    headers.forEach((header, index) => {
-      user[header] = userRow[index] || ''; // Aseguramos que el valor sea un string vacío si la celda está vacía
-    });
-
-    // Devolvemos el objeto de usuario y el número de la fila en la hoja.
-    // Sumamos 2 porque los arrays empiezan en 0 y la primera fila es de encabezados.
-    return { user, rowIndex: userRowIndex + 2 };
-
+    // Esta función ahora puede ser un caso específico de la nueva función genérica
+    return await findRowByValueInColumn('Login', 'Usuario', email);
   } catch (error) {
     console.error('Error al buscar usuario por email:', error);
     return null;
   }
 };
 
-
-// --- Nueva Función para Buscar Usuario por Token de Reseteo ---
 const findUserByResetToken = async (token) => {
+    // ... (código existente sin cambios)
+};
+
+
+// --- NUEVA FUNCIÓN GENÉRICA ---
+/**
+ * Busca una fila en una hoja específica basándose en el valor de una columna.
+ * @param {string} sheetName - El nombre de la hoja a buscar.
+ * @param {string} columnName - El nombre de la columna (header) para buscar.
+ * @param {string} valueToFind - El valor a encontrar en la columna especificada.
+ * @returns {Promise<{user: object, rowIndex: number}|null>} - El objeto de datos y el índice de la fila, o null si no se encuentra.
+ */
+const findRowByValueInColumn = async (sheetName, columnName, valueToFind) => {
   try {
-    const rows = await getSheetData(process.env.SPREADSHEET_ID, 'Login');
+    const rows = await getSheetData(process.env.SPREADSHEET_ID, sheetName);
     if (!rows || rows.length <= 1) return null;
 
     const headers = rows[0];
     const dataRows = rows.slice(1);
-    // El índice de la columna 'resetToken' (asumimos que es la columna I, índice 8)
-    const tokenColumnIndex = headers.indexOf('resetToken');
-    if (tokenColumnIndex === -1) {
-      console.error("La columna 'resetToken' no se encontró en la hoja de cálculo.");
+    const columnIndex = headers.indexOf(columnName);
+
+    if (columnIndex === -1) {
+      console.error(`Error: La columna "${columnName}" no se encontró en la hoja "${sheetName}".`);
       return null;
     }
 
-    const userRowIndex = dataRows.findIndex(row => row[tokenColumnIndex] === token);
+    const rowIndexInArray = dataRows.findIndex(row => row[columnIndex] === valueToFind);
 
-    if (userRowIndex === -1) {
-      return null; // Usuario no encontrado
+    if (rowIndexInArray === -1) {
+      return null; // No se encontró la fila
     }
 
-    const userRow = dataRows[userRowIndex];
-    const user = {};
+    const rowData = dataRows[rowIndexInArray];
+    const rowObject = {};
     headers.forEach((header, index) => {
-      user[header] = userRow[index] || '';
+      rowObject[header] = rowData[index] || '';
     });
 
-    return { user, rowIndex: userRowIndex + 2 };
+    // Devolvemos el objeto y el número de la fila en la hoja (índice + 2)
+    return { user: rowObject, rowIndex: rowIndexInArray + 2 };
 
   } catch (error) {
-    console.error('Error al buscar usuario por token de reseteo:', error);
+    console.error(`Error buscando por valor en la columna "${columnName}" en la hoja "${sheetName}":`, error);
     return null;
   }
 };
@@ -135,4 +119,5 @@ module.exports = {
   findUserByEmail,
   updateCell,
   findUserByResetToken,
+  findRowByValueInColumn, // <-- Exportar la nueva función
 };
