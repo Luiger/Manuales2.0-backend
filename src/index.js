@@ -9,6 +9,7 @@ const authRoutes = require('./routes/auth.routes'); // Nuevas rutas de autentica
 const form2Routes = require('./routes/form2.routes');
 
 const manualesRoutes = require('./routes/manuales.routes');
+const userRoutes = require('./routes/user.routes'); // Nuevas rutas de usuario
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,6 +29,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/forms', form2Routes);
 // Añadimos las rutas para el formulario de "Manual de Contrataciones"
 app.use('/api/manuales', manualesRoutes);
+// Añadimos las nuevas rutas de usuario
+app.use('/api/user', userRoutes);
 
 // Ruta de bienvenida para verificar que el servidor funciona
 app.get('/', (req, res) => {
