@@ -1,7 +1,8 @@
 const { google } = require('googleapis');
+const SERVICE_ACCOUNT_JSON_FILE_PATH = process.env.SERVICE_ACCOUNT_JSON_FILE_PATH;
 
-const auth = new google.auth.GoogleAuth({
-  keyFile: 'service-account.json',
+const auth = new google.auth.GoogleAuth({  
+  keyFile: SERVICE_ACCOUNT_JSON_FILE_PATH,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
