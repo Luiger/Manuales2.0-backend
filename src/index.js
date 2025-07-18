@@ -3,11 +3,8 @@ const express = require('express');
 const cors = require('cors'); // Importamos cors
 
 // Importamos las rutas existentes y las nuevas
-const formRoutes = require('./routes/form.routes');
 const authRoutes = require('./routes/auth.routes'); // Nuevas rutas de autenticación
 // Importamos las nuevas rutas de formularios
-const form2Routes = require('./routes/form2.routes');
-
 const manualesRoutes = require('./routes/manuales.routes');
 const userRoutes = require('./routes/user.routes'); // Nuevas rutas de usuario
 
