@@ -21,12 +21,8 @@ app.use(cors());
 app.use(express.json());
 
 // --- Rutas ---
-// Mantenemos la ruta existente para los formularios
-app.use('/api/form', formRoutes);
 // Añadimos la nueva ruta para la autenticación
 app.use('/api/auth', authRoutes);
-// Registramos las nuevas rutas bajo un prefijo común para formularios
-app.use('/api/forms', form2Routes);
 // Añadimos las rutas para el formulario de "Manual de Contrataciones"
 app.use('/api/manuales', manualesRoutes);
 // Añadimos las nuevas rutas de usuario

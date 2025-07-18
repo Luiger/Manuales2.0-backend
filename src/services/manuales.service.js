@@ -12,11 +12,9 @@ const COLUMN_MAP = {
   'Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano': 'E',
   'Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano': 'F',
   'Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano': 'G',
-  'Persona de contacto': 'H',
-  'Teléfono': 'I',
-  'Correo electrónico': 'J',
-  'UsuarioRegistradoEmail': 'K', 
-  'Llenado': 'L',
+  'Correo electrónico': 'H',
+  'UsuarioRegistradoEmail': 'I', 
+  'Llenado': 'J',
 };
 
 /**
@@ -46,8 +44,6 @@ const saveOrUpdateManualContrataciones = async (formData, userEmail) => {
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano']}${rowIndex}`, formData['Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano']),
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano']}${rowIndex}`, formData['Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano']),
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano']}${rowIndex}`, formData['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano']),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Persona de contacto']}${rowIndex}`, formData['Persona de contacto']),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Teléfono']}${rowIndex}`, formData['Teléfono']),
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Correo electrónico']}${rowIndex}`, formData['Correo electrónico']),
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Llenado']}${rowIndex}`, 'TRUE'),
         updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Marca temporal']}${rowIndex}`, new Date().toISOString()),
@@ -66,8 +62,6 @@ const saveOrUpdateManualContrataciones = async (formData, userEmail) => {
         formData['Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano'],
         formData['Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano'],
         formData['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano'],
-        formData['Persona de contacto'],
-        formData['Teléfono'],
         formData['Correo electrónico'],
         userEmail, // Email del usuario autenticado
         'TRUE',    // Estado de llenado
