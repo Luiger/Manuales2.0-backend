@@ -8,7 +8,7 @@ const submitManualContratacionesForm = async (req, res) => {
     const userEmail = req.user.email;
     const formData = req.body;
 
-    if (!formData['Dirección de correo electrónico'] || !formData['Persona de contacto']) {
+    if (!formData['Dirección de correo electrónico']) {
       return res.status(400).json({ message: 'Faltan campos requeridos en el formulario.' });
     }
 
