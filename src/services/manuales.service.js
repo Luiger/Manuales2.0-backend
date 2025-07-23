@@ -6,17 +6,15 @@ const SHEET_NAME = 'MANUAL CONTRATACIONES valor agregado ESCALA';
 // Mapeo de columnas, incluyendo las nuevas
 const COLUMN_MAP = {
   'Marca temporal': 'A',
-  'Dirección de correo electrónico': 'B',
-  'Nombre de la Institución / Ente / Órgano': 'C',
-  'Acrónimo y/o siglas de la Institución / Ente / Órgano': 'D',
-  'Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano': 'E',
-  'Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano': 'F',
-  'Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano': 'G',
-  'Correo electrónico': 'H',
-  'UsuarioRegistradoEmail': 'I', 
-  'Llenado': 'J',
+  'Nombre de la Institución / Ente / Órgano': 'B', 
+  'Acrónimo y/o siglas de la Institución / Ente / Órgano': 'C', 
+  'Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano': 'D',
+  'Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano': 'E', 
+  'Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano': 'F', 
+  'Correo electrónico': 'G', 
+  'UsuarioRegistradoEmail': 'H', 
+  'Llenado': 'I', 
 };
-
 /**
  * Guarda o actualiza una entrada, vinculada al usuario autenticado.
  * @param {object} formData - Los datos del formulario.
