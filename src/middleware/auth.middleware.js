@@ -26,6 +26,17 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// Verificar si el usuario es Admin
+const isAdmin = (req, res, next) => {
+  // Se asume que este middleware se usa DESPUÉS de authenticateToken
+  if (req.user && req.user.rol === 'Admin') {
+    next(); // El usuario es Admin, puede continuar
+  } else {
+    res.status(403).json({ message: 'Acceso denegado. Se requiere rol de administrador.' });
+  }
+};
+
 module.exports = {
   authenticateToken,
+  isAdmin,
 };

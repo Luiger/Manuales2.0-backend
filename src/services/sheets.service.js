@@ -120,5 +120,6 @@ module.exports = {
   findUserByEmail,
   updateCell,
   findUserByResetToken,
-  findRowByValueInColumn, // <-- Exportar la nueva función
+  findRowByValueInColumn,
+  sheets,
 };

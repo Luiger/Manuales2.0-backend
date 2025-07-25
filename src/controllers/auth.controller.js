@@ -42,6 +42,7 @@ const loginController = async (req, res) => {
     const payload = {
       id: user.ID,
       email: user.Usuario,
+      rol: user.Rol || 'Usuario Gratis', // Si un usuario antiguo no tiene rol, se le asigna gratis
     };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
 
@@ -89,6 +90,7 @@ const registerCredentialsController = async (req, res) => {
       '', // Cargo
       '', // resetToken
       '', // resetTokenExpiry
+      'Usuario Gratis', // Rol (por defecto)
     ];
     const success = await appendSheetData(process.env.SPREADSHEET_ID, 'Login', newRow);
 

@@ -24,6 +24,30 @@ const updateProfile = async (req, res) => {
   }
 };
 
+// Controlador para obtener todos los usuarios
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+    res.json({ success: true, data: users });
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+// Controlador para actualizar el rol de un usuario
+const updateUserRole = async (req, res) => {
+  try {
+    const { email, newRole } = req.body;
+    const success = await userService.updateUserRole(email, newRole);
+    if (!success) {
+      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    }
+    res.json({ success: true, message: 'Rol actualizado exitosamente.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 const verifyPasswordController = async (req, res) => {
     try {
         const { currentPassword } = req.body;
@@ -58,4 +82,6 @@ module.exports = {
   updateProfile,
   verifyPasswordController,
   changePasswordController,
+  getAllUsers,
+  updateUserRole,
 };

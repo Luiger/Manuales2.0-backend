@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const { findUserByEmail, updateCell } = require('./sheets.service');
+const { findUserByEmail, getSheetData, updateCell, sheets } = require('./sheets.service');
 
 // Columnas relevantes en la hoja "Login"
 const COLUMNS = {
@@ -21,7 +21,7 @@ const getProfileByEmail = async (email) => {
   if (!result) return null;
 
   const { user } = result;
-  // ✅ CORRECCIÓN: Nos aseguramos de devolver TODOS los campos necesarios.
+  // Nos aseguramos de devolver TODOS los campos necesarios.
   return {
     Nombre: user.Nombre,
     Apellido: user.Apellido,
@@ -29,6 +29,7 @@ const getProfileByEmail = async (email) => {
     Institucion: user.Institucion,
     Cargo: user.Cargo,
     Email: user.Usuario,
+    Rol: user.Rol || 'Usuario Gratis',
   };
 };
 
@@ -87,9 +88,54 @@ const changePassword = async (email, newPassword) => {
     return true;
 };
 
+const getAllUsers = async () => {
+  try {
+    const spreadsheetId = process.env.SPREADSHEET_ID;
+    // Solicitamos un rango específico para ser más eficientes y evitar errores.
+    const range = 'Login!A1:K1000'; // Columnas A hasta K, hasta la fila 1000
+
+    const response = await sheets.spreadsheets.values.get({ spreadsheetId, range });
+    const rows = response.data.values;
+
+    if (!rows || rows.length <= 1) return [];
+
+    const headers = rows[0];
+    const users = rows.slice(1).map(row => {
+      const userObject = {};
+      headers.forEach((header, index) => {
+        userObject[header] = row[index] || '';
+      });
+      return {
+        Nombre: userObject.Nombre,
+        Apellido: userObject.Apellido,
+        Usuario: userObject.Usuario,
+        Rol: userObject.Rol,
+      };
+    });
+    return users;
+  } catch (error) {
+    console.error("Error en getAllUsers optimizado:", error);
+    return [];
+  }
+};
+
+/**
+ * Servicio para actualizar el rol (versión correcta)
+ */
+const updateUserRole = async (email, newRole) => {
+  const result = await findUserByEmail(email);
+  if (!result) return false;
+  
+  const { rowIndex } = result;
+  await updateCell(process.env.SPREADSHEET_ID, 'Login', `K${rowIndex}`, newRole);
+  return true;
+};
+
 module.exports = {
   getProfileByEmail,
   updateProfileByEmail,
   verifyCurrentPassword,
   changePassword,
+  getAllUsers,
+  updateUserRole,
 };
