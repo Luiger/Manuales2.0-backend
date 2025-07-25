@@ -3,10 +3,11 @@ const express = require('express');
 const cors = require('cors'); // Importamos cors
 
 // Importamos las rutas existentes y las nuevas
-const authRoutes = require('./routes/auth.routes'); // Nuevas rutas de autenticación
+const authRoutes = require('./routes/auth.routes'); // Rutas de autenticación
 // Importamos las nuevas rutas de formularios
 const manualesRoutes = require('./routes/manuales.routes');
-const userRoutes = require('./routes/user.routes'); // Nuevas rutas de usuario
+const userRoutes = require('./routes/user.routes'); // Rutas de usuario
+const aiRoutes = require('./routes/ai.routes');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -24,6 +25,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/manuales', manualesRoutes);
 // Añadimos las nuevas rutas de usuario
 app.use('/api/user', userRoutes);
+// Añadimos las rutas del chatbot de IA
+app.use('/api/ai', aiRoutes);
 
 // Ruta de bienvenida para verificar que el servidor funciona
 app.get('/', (req, res) => {
