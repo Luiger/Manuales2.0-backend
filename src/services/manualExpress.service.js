@@ -3,7 +3,7 @@ const { updateCell, appendSheetData, findRowByValueInColumn } = require('./sheet
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_NAME = 'CONCURSO ABIERTO SIMINISTRO DE BIENES APP.COD';
 
-// El COLUMN_MAP se mantiene igual, define la estructura de la hoja.
+// El COLUMN_MAP ahora se usará correctamente
 const COLUMN_MAP = {
   'Marca temporal': 'A',
   'Indique el Nombre de la Institución / Ente / Órgano.': 'B',
@@ -18,35 +18,34 @@ const saveOrUpdateManualExpress = async (formData, userEmail) => {
   try {
     const existingEntry = await findRowByValueInColumn(SHEET_NAME, 'UsuarioRegistradoEmail', userEmail);
 
-    // ✅ MEJORA: Se extraen explícitamente los campos esperados del formData.
-    // Esto hace el código más seguro y legible.
-    const nombreInstitucion = formData['Indique el Nombre de la Institución / Ente / Órgano.'];
-    const siglas = formData['Indique el Acrónimo y/o siglas de la Institución / Ente / Órgano.'];
-    const unidadGestion = formData['Indique el Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano.'];
-    const unidadSistemas = formData['Indique el Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano.'];
+    // Se extraen las claves de las columnas para usarlas
+    const nombreKey = 'Indique el Nombre de la Institución / Ente / Órgano.';
+    const siglasKey = 'Indique el Acrónimo y/o siglas de la Institución / Ente / Órgano.';
+    const gestionKey = 'Indique el Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano.';
+    const sistemasKey = 'Indique el Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano.';
 
     if (existingEntry) {
-      // Si ya existe, actualiza la fila existente de forma explícita.
       const { rowIndex } = existingEntry;
+      // ✅ CORRECCIÓN: Se usa el COLUMN_MAP para encontrar la letra de la columna dinámicamente
       const updatePromises = [
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `B${rowIndex}`, nombreInstitucion),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `C${rowIndex}`, siglas),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `D${rowIndex}`, unidadGestion),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `E${rowIndex}`, unidadSistemas),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `G${rowIndex}`, 'TRUE'),
-        updateCell(SPREADSHEET_ID, SHEET_NAME, `A${rowIndex}`, new Date().toISOString()),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP[nombreKey]}${rowIndex}`, formData[nombreKey]),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP[siglasKey]}${rowIndex}`, formData[siglasKey]),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP[gestionKey]}${rowIndex}`, formData[gestionKey]),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP[sistemasKey]}${rowIndex}`, formData[sistemasKey]),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Llenado']}${rowIndex}`, 'TRUE'),
+        updateCell(SPREADSHEET_ID, SHEET_NAME, `${COLUMN_MAP['Marca temporal']}${rowIndex}`, new Date().toISOString()),
       ];
       await Promise.all(updatePromises);
     } else {
-      // Si no existe, crea una nueva fila.
+      // Para la creación de una nueva fila, el orden es lo importante, y ya estaba correcto.
       const newRow = [
-        new Date().toISOString(), // Columna A
-        nombreInstitucion,        // Columna B
-        siglas,                   // Columna C
-        unidadGestion,            // Columna D
-        unidadSistemas,           // Columna E
-        userEmail,                // Columna F
-        'TRUE',                   // Columna G
+        new Date().toISOString(),
+        formData[nombreKey],
+        formData[siglasKey],
+        formData[gestionKey],
+        formData[sistemasKey],
+        userEmail,
+        'TRUE',
       ];
       await appendSheetData(SPREADSHEET_ID, SHEET_NAME, newRow);
     }

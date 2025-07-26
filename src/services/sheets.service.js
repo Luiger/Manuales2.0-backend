@@ -1,125 +1,164 @@
 const { google } = require('googleapis');
-const GOOGLE_APPLICATION_CREDENTIALS = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-const auth = new google.auth.GoogleAuth({  
-  keyFile: GOOGLE_APPLICATION_CREDENTIALS,
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+// La librería de Google busca esta variable de entorno por defecto.
+const auth = new google.auth.GoogleAuth({  
+  keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
+  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
 const sheets = google.sheets({ version: 'v4', auth });
 
-const getSheetData = async (spreadsheetId, sheetName) => {
-  try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: sheetName,
-    });
-    return response.data.values;
-  } catch (error) {
-    console.error('Error fetching sheet data:', error);
-    return null;
-  }
-};
-
-const appendSheetData = async (spreadsheetId, sheetName, rowData) => {
-  try {
-    const response = await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: sheetName,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [rowData],
-      },
-    });
-    return response.status === 200;
-  } catch (error) {
-    console.error('Error appending sheet data:', error.response ? error.response.data : error.message);
-    return false;
-  }
-};
-
-const updateCell = async (spreadsheetId, sheetName, range, value) => {
-  try {
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${sheetName}!${range}`,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: {
-        values: [[value]],
-      },
-    });
-    return true;
-  } catch (error) {
-    console.error('Error updating cell:', error);
-    return false;
-  }
-};
-
-const findUserByEmail = async (email) => {
-  try {
-    // Esta función ahora puede ser un caso específico de la nueva función genérica
-    return await findRowByValueInColumn('Login', 'Usuario', email);
-  } catch (error) {
-    console.error('Error al buscar usuario por email:', error);
-    return null;
-  }
-};
-
-const findUserByResetToken = async (token) => {
-    // ... (código existente sin cambios)
-};
-
-
-// --- NUEVA FUNCIÓN GENÉRICA ---
 /**
- * Busca una fila en una hoja específica basándose en el valor de una columna.
- * @param {string} sheetName - El nombre de la hoja a buscar.
- * @param {string} columnName - El nombre de la columna (header) para buscar.
- * @param {string} valueToFind - El valor a encontrar en la columna especificada.
- * @returns {Promise<{user: object, rowIndex: number}|null>} - El objeto de datos y el índice de la fila, o null si no se encuentra.
+ * Obtiene datos de un rango específico de una hoja.
+ * @param {string} spreadsheetId - El ID de la hoja de cálculo.
+ * @param {string} range - El rango a obtener (ej: 'MiHoja!A1:Z100').
+ * @returns {Promise<Array<Array<string>>|null>}
+ */
+const getSheetData = async (spreadsheetId, range) => {
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range, // Usa el 'range' que incluye el nombre de la hoja
+    });
+    return response.data.values;
+  } catch (error) {
+    console.error(`Error fetching sheet data for range ${range}:`, error.message);
+    return null;
+  }
+};
+
+/**
+ * Añade una nueva fila de datos al final de una hoja.
+ * @param {string} spreadsheetId - El ID de la hoja de cálculo.
+ * @param {string} sheetName - El nombre de la hoja.
+ * @param {Array<string>} rowData - Los datos de la fila a añadir.
+ * @returns {Promise<boolean>}
+ */
+const appendSheetData = async (spreadsheetId, sheetName, rowData) => {
+  try {
+    const response = await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: sheetName,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [rowData],
+      },
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error('Error appending sheet data:', error);
+    return false;
+  }
+};
+
+/**
+ * Actualiza el valor de una celda específica.
+ * @param {string} spreadsheetId - El ID de la hoja de cálculo.
+ * @param {string} sheetName - El nombre de la hoja.
+ * @param {string} range - La celda a actualizar (ej: 'A1').
+ * @param {string} value - El nuevo valor.
+ * @returns {Promise<boolean>}
+ */
+const updateCell = async (spreadsheetId, sheetName, range, value) => {
+  try {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: `${sheetName}!${range}`,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [[value]],
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('Error updating cell:', error);
+    return false;
+  }
+};
+
+/**
+ * VERSIÓN OPTIMIZADA Y CORREGIDA
+ * Busca una fila basándose en el valor de una columna de forma eficiente.
  */
 const findRowByValueInColumn = async (sheetName, columnName, valueToFind) => {
   try {
-    const rows = await getSheetData(process.env.SPREADSHEET_ID, sheetName);
-    if (!rows || rows.length <= 1) return null;
+    const spreadsheetId = process.env.SPREADSHEET_ID;
 
-    const headers = rows[0];
-    const dataRows = rows.slice(1);
+    // 1. Obtiene los encabezados para encontrar el índice de la columna
+    const headerResponse = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!1:1` });
+    if (!headerResponse.data.values) {
+        throw new Error(`La hoja "${sheetName}" está vacía o no tiene encabezados.`);
+    }
+    const headers = headerResponse.data.values[0];
     const columnIndex = headers.indexOf(columnName);
 
     if (columnIndex === -1) {
-      console.error(`Error: La columna "${columnName}" no se encontró en la hoja "${sheetName}".`);
-      return null;
+      throw new Error(`La columna "${columnName}" no fue encontrada en "${sheetName}".`);
     }
 
-    const rowIndexInArray = dataRows.findIndex(row => row[columnIndex] === valueToFind);
+    const columnLetter = String.fromCharCode('A'.charCodeAt(0) + columnIndex);
 
-    if (rowIndexInArray === -1) {
-      return null; // No se encontró la fila
-    }
+    // 2. Obtiene solo la columna de búsqueda para ser rápido
+    const columnResponse = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!${columnLetter}2:${columnLetter}` });
+    const columnValues = columnResponse.data.values;
 
-    const rowData = dataRows[rowIndexInArray];
-    const rowObject = {};
+    if (!columnValues) return null;
+
+    // 3. Busca el valor en memoria
+    const rowIndexInArray = columnValues.findIndex(row => row[0] === valueToFind);
+    if (rowIndexInArray === -1) return null;
+    
+    const sheetRowIndex = rowIndexInArray + 2;
+
+    // 4. Si lo encuentra, obtiene solo los datos de esa fila específica
+    const rowResponse = await sheets.spreadsheets.values.get({ spreadsheetId, range: `${sheetName}!${sheetRowIndex}:${sheetRowIndex}` });
+    const rowData = rowResponse.data.values[0];
+
+    const userObject = {};
     headers.forEach((header, index) => {
-      rowObject[header] = rowData[index] || '';
+      userObject[header] = rowData[index] || '';
     });
 
-    // Devolvemos el objeto y el número de la fila en la hoja (índice + 2)
-    return { user: rowObject, rowIndex: rowIndexInArray + 2 };
+    return { user: userObject, rowIndex: sheetRowIndex };
 
   } catch (error) {
-    console.error(`Error buscando por valor en la columna "${columnName}" en la hoja "${sheetName}":`, error);
+    console.error(`Error en la búsqueda optimizada en "${sheetName}":`, error);
     return null;
   }
 };
 
+/**
+ * Función específica para buscar un usuario por su email en la hoja "Login".
+ * @param {string} email - El email a buscar.
+ */
+const findUserByEmail = async (email) => {
+  try {
+    return await findRowByValueInColumn('Login', 'Usuario', email);
+  } catch (error) {
+    console.error('Error al buscar usuario por email:', error);
+    return null;
+  }
+};
+
+/**
+ * Función específica para buscar un usuario por su token de reseteo.
+ * @param {string} token - El token a buscar.
+ */
+const findUserByResetToken = async (token) => {
+    try {
+        return await findRowByValueInColumn('Login', 'resetToken', token);
+    } catch (error) {
+        console.error('Error al buscar usuario por token de reseteo:', error);
+        return null;
+    }
+};
 
 module.exports = {
-  getSheetData,
-  appendSheetData,
-  findUserByEmail,
-  updateCell,
-  findUserByResetToken,
-  findRowByValueInColumn,
-  sheets,
+  getSheetData,
+  appendSheetData,
+  findUserByEmail,
+  updateCell,
+  findUserByResetToken,
+  findRowByValueInColumn,
+  sheets, // Se exporta para ser usado en otros servicios
 };
