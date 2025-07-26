@@ -1,7 +1,7 @@
 const { updateCell, appendSheetData, findRowByValueInColumn } = require('./sheets.service');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME = 'CONCURSO ABIERTO SIMINISTRO DE BIENES ESCALA';
+const SHEET_NAME = 'CONCURSO ABIERTO SIMINISTRO DE BIENES APP.COD';
 
 // El COLUMN_MAP se mantiene igual, define la estructura de la hoja.
 const COLUMN_MAP = {

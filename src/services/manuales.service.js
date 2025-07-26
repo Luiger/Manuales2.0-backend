@@ -1,7 +1,7 @@
 const { updateCell, appendSheetData, findRowByValueInColumn } = require('./sheets.service');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME = 'MANUAL CONTRATACIONES valor agregado ESCALA';
+const SHEET_NAME = 'MANUAL CONTRATACIONES valor agregado APP.COD';
 
 // Mapeo de columnas, incluyendo las nuevas
 const COLUMN_MAP = {

@@ -2,7 +2,7 @@ const manualesService = require('../services/manuales.service');
 const manualExpressService = require('../services/manualExpress.service');
 const { findRowByValueInColumn } = require('../services/sheets.service');
 
-const SHEET_NAME = 'MANUAL CONTRATACIONES valor agregado ESCALA';
+const SHEET_NAME = 'MANUAL CONTRATACIONES valor agregado APP.COD';
 
 const submitManualContratacionesForm = async (req, res) => {
   try {
