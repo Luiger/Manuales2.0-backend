@@ -9,11 +9,12 @@ const submitManualContratacionesForm = async (req, res) => {
     const userEmail = req.user.email;
     const formData = req.body;
 
-    if (!formData['Nombre de la Institución / Ente / Órgano']  
+    if (!formData['Nombre de la Institución / Ente / Órgano']
+      ({/*  
       || !formData['Acrónimo y/o siglas de la Institución / Ente / Órgano'] 
       || !formData['Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano']
       || !formData['Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano']
-      || !formData['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano']) {
+      || !formData['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano']*/})) {
       return res.status(400).json({ message: 'Faltan campos requeridos en el formulario.' });
     }
 
