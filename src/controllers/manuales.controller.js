@@ -9,12 +9,7 @@ const submitManualContratacionesForm = async (req, res) => {
     const userEmail = req.user.email;
     const formData = req.body;
 
-    if (!formData['Nombre de la Institución / Ente / Órgano']
-      ({/*  
-      || !formData['Acrónimo y/o siglas de la Institución / Ente / Órgano'] 
-      || !formData['Nombre de la Unidad / Gerencia y/u Oficina responsable de la Gestión Administrativa y Financiera de la Institución / Ente / Órgano']
-      || !formData['Nombre de la Unidad / Gerencia y/u Oficina responsable del Área de Sistema y Tecnología de la Institución / Ente / Órgano']
-      || !formData['Nombre de la Unidad / Gerencia y/u Oficina que cumple funciones de Unidad Contratante en la Institución / Ente / Órgano']*/})) {
+    if (!formData.nombreInstitucion) {
       return res.status(400).json({ message: 'Faltan campos requeridos en el formulario.' });
     }
 
@@ -59,7 +54,7 @@ const submitManualExpressForm = async (req, res) => {
     // ✅ VERIFICACIÓN CONDICIONAL
     // Solo si la variable de entorno está en 'true', hacemos la validación.
     if (process.env.ENABLE_SINGLE_SUBMISSION_CHECK === 'true') {
-      const existingSubmission = await findRowByValueInColumn('CONCURSO ABIERTO SIMINISTRO DE BIENES ESCALA', 'UsuarioRegistradoEmail', userEmail);
+      const existingSubmission = await findRowByValueInColumn('CONCURSO ABIERTO SIMINISTRO DE BIENES APP.COD', 'UsuarioRegistradoEmail', userEmail);
       if (existingSubmission) {
         return res.status(403).json({ success: false, error: 'Ya has llenado este formulario.' });
       }
@@ -86,7 +81,7 @@ const checkExpressSubmissionStatus = async (req, res) => {
     // Si la restricción está activa, verificamos en la base de datos.
     if (isRestrictionActive) {
       const userEmail = req.user.email;
-      const existingSubmission = await findRowByValueInColumn('CONCURSO ABIERTO SIMINISTRO DE BIENES ESCALA', 'UsuarioRegistradoEmail', userEmail);
+      const existingSubmission = await findRowByValueInColumn('CONCURSO ABIERTO SIMINISTRO DE BIENES APP.COD', 'UsuarioRegistradoEmail', userEmail);
       if (existingSubmission && existingSubmission.user.Llenado === 'TRUE') {
         hasSubmitted = true;
       }

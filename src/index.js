@@ -21,7 +21,7 @@ app.use(express.json());
 // --- Rutas ---
 // Añadimos la nueva ruta para la autenticación
 app.use('/api/auth', authRoutes);
-// Añadimos las rutas para el formulario de "Manual de Contrataciones"
+// Añadimos las rutas para el formula  rio de "Manual de Contrataciones"
 app.use('/api/manuales', manualesRoutes);
 // Añadimos las nuevas rutas de usuario
 app.use('/api/user', userRoutes);
