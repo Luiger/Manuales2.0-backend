@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth.routes'); // Rutas de autenticación
 const manualesRoutes = require('./routes/manuales.routes');
 const userRoutes = require('./routes/user.routes'); // Rutas de usuario
 const aiRoutes = require('./routes/ai.routes');
+const redirectRoutes = require('./routes/redirect.routes')
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -27,6 +28,8 @@ app.use('/api/manuales', manualesRoutes);
 app.use('/api/user', userRoutes);
 // Añadimos las rutas del chatbot de IA
 app.use('/api/ai', aiRoutes);
+// Añadimos las rutas de redirección
+app.use('/api/redirect', redirectRoutes);
 
 // Ruta de bienvenida para verificar que el servidor funciona
 app.get('/', (req, res) => {

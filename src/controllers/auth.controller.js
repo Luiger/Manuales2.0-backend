@@ -6,7 +6,8 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { findUserByEmail, updateCell, findUserByResetToken } = require('../services/sheets.service');
+const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData } = require('../services/sheets.service');
+const { sendEmail, generateOtp, getPasswordResetHTML } = require('../services/email.service');
 
 const loginController = async (req, res) => {
   try {
@@ -56,8 +57,6 @@ const loginController = async (req, res) => {
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
 };
-
-const { appendSheetData } = require('../services/sheets.service');
 
 // --- Controlador para el primer paso del registro ---
 const registerCredentialsController = async (req, res) => {
@@ -155,9 +154,6 @@ const registerProfileController = async (req, res) => {
   }
 };
 
-
-const { sendEmail, generateOtp, getOtpEmailHTML } = require('../services/email.service');
-
 // --- Controlador para solicitar la recuperación de contraseña ---
 const forgotPasswordController = async (req, res) => {
   try {
@@ -172,16 +168,19 @@ const forgotPasswordController = async (req, res) => {
       // El código expira en 10 minutos.
       const otpExpiry = Date.now() + 600000; // 10 minutos en milisegundos
 
-      // Guardar el código y la fecha de expiración en el Google Sheet.
-      const updatePromises = [
-        updateCell(process.env.SPREADSHEET_ID, 'Login', `I${rowIndex}`, otp), // Guardamos el OTP en la columna 'resetToken'
+      // EL NUEVO ENLACE APUNTANDO A TU SERVIDOR
+      // (Es recomendable mover esta URL a tu archivo .env como BACKEND_URL)
+      const backendUrl = 'https://manuales2-0-backend.onrender.com';
+      const finalLink = `${backendUrl}/api/redirect?otp=${otp}&email=${email}`;
+
+      await Promise.all([
+        updateCell(process.env.SPREADSHEET_ID, 'Login', `I${rowIndex}`, otp),
         updateCell(process.env.SPREADSHEET_ID, 'Login', `J${rowIndex}`, new Date(otpExpiry).toISOString()),
-      ];
-      await Promise.all(updatePromises);
+      ]);
 
       // Enviar el correo de recuperación con el código OTP.
-      const emailHTML = getOtpEmailHTML(otp, user.Nombre || 'usuario');
-      await sendEmail(email, 'Tu Código de Recuperación de Contraseña', emailHTML);
+      const emailHTML = getPasswordResetHTML(user.Nombre || 'usuario', finalLink);
+      await sendEmail(email, 'Restablece tu contraseña', emailHTML);
     }
 
     // Por seguridad, siempre enviamos una respuesta genérica.
