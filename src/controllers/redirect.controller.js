@@ -9,7 +9,7 @@ const handleRedirect = (req, res) => {
     }
 
     // Construimos el enlace profundo que abrirá la app
-    const appSchemeUrl = `manualesapp://reset-password?otp=${otp}&email=${email}`;
+    const appSchemeUrl = `manualesapp://forgot-password?otp=${otp}&email=${email}`;
     
     // Definimos una URL de respaldo si la app no está instalada
     const fallbackUrl = 'https://universitas.legal/';
