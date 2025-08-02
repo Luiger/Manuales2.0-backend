@@ -93,8 +93,32 @@ const getPasswordResetHTML = (name, resetLink) => {
   `;
 };
 
+const getActivationEmailHTML = (name, activationLink) => {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <body>
+    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
+      <h2 style="color: #1d2342;">Confirma tu cuenta</h2>
+      <p style="text-align: left;">¡Hola, ${name}!</p>
+      <p style="text-align: left;">Bienvenido a la plataforma de Manuales de Contrataciones Públicas de Universitas.</p>
+      <p style="text-align: left;">Para completar tu registro y asegurar tu cuenta, solo necesitas hacer clic en el siguiente botón:</p>
+      <a href="${activationLink}" target="_blank" style="display: inline-block; background-color: #1d2342; color: #ffffff; padding: 15px 25px; margin: 20px 0; text-decoration: none; border-radius: 8px; font-weight: bold;">
+        Activar mi cuenta
+      </a>
+      <p style="font-size: 12px; color: #777;">Si el botón anterior no funciona, por favor copia y pega el siguiente enlace en tu navegador:<br><a href="${activationLink}" target="_blank" style="color: #1f3c87;">${activationLink}</a></p>
+      <p style="margin-top: 20px; text-align: left;">Una vez que actives tu cuenta, podrás iniciar sesión y comenzar a elaborar tu manual express de forma gratuita.</p>
+      <p style="text-align: left;">Si no creaste esta cuenta, por favor ignora este correo electrónico.</p>
+      <p style="text-align: left;">Saludos,<br>El equipo de Universitas</p>
+    </div>
+  </body>
+  </html>
+  `;
+};
+
 module.exports = {
   sendEmail,
   generateOtp,
   getPasswordResetHTML,
+  getActivationEmailHTML,
 };

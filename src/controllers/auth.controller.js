@@ -6,51 +6,32 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData } = require('../services/sheets.service');
-const { sendEmail, generateOtp, getPasswordResetHTML } = require('../services/email.service');
+const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData, deleteRow } = require('../services/sheets.service');
+const { sendEmail, generateOtp, getPasswordResetHTML, getActivationEmailHTML } = require('../services/email.service');
 
 const loginController = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const result = await findUserByEmail(email);
+
     if (!email || !password) {
       return res.status(400).json({ message: 'El correo y la contraseña son requeridos.' });
-    }
-
-    const result = await findUserByEmail(email);
+    }    
     if (!result) {
       return res.status(401).json({ message: 'Credenciales inválidas.' });
     }
 
-    const { user, rowIndex } = result;
+    const { user } = result;
+    if (!user.ID) { // VALIDACIÓN CLAVE
+      return res.status(403).json({ message: 'Tu cuenta no ha sido verificada. Por favor, revisa tu correo electrónico.' });
+    }
 
-    // --- Verificación de Contraseña con bcrypt ---
-    // `bcrypt.compareSync` compara la contraseña enviada en texto plano (`password`)
-    // con el hash almacenado en la base de datos (`user.Contraseña`).
     const isMatch = bcrypt.compareSync(password, user.Contraseña);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Credenciales inválidas.' });
-    }
+    if (!isMatch) return res.status(401).json({ message: 'Credenciales inválidas.' });
 
-    // --- Verificación y Generación de ID (si es necesario) ---
-    if (!user.ID) {
-      const newId = crypto.randomUUID();
-      const idCell = `A${rowIndex}`;
-      await updateCell(process.env.SPREADSHEET_ID, 'Login', idCell, newId);
-      user.ID = newId;
-    }
-
-    // --- Generación del Token JWT ---
-    const payload = {
-      id: user.ID,
-      email: user.Usuario,
-      rol: user.Rol || 'Usuario Gratis', // Si un usuario antiguo no tiene rol, se le asigna gratis
-    };
+    const payload = { id: user.ID, email: user.Usuario, rol: user.Rol };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-    res.status(200).json({
-      message: 'Inicio de sesión exitoso.',
-      token: token,
-    });
+    res.status(200).json({ message: 'Inicio de sesión exitoso.', token });
 
   } catch (error) {
     console.error('Error en el controlador de login:', error);
@@ -62,16 +43,22 @@ const loginController = async (req, res) => {
 const registerCredentialsController = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const existingUser = await findUserByEmail(email);
+
     if (!email || !password) {
       return res.status(400).json({ message: 'El correo y la contraseña son requeridos.' });
     }
 
-    // Verificar si el usuario ya existe
-    const existingUser = await findUserByEmail(email);
     if (existingUser) {
-      return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
+      // Si el usuario existe pero no está verificado (no tiene ID) y su token expiró
+      const isUnverifiedAndExpired = !existingUser.user.ID && new Date(existingUser.user.resetTokenExpiry).getTime() < Date.now();
+      if (isUnverifiedAndExpired) {
+        // Limpiamos el registro antiguo para permitir que el usuario se registre de nuevo
+        await deleteRow(process.env.SPREADSHEET_ID, 'Login', existingUser.rowIndex);
+      } else {
+        return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
+      }
     }
-
     // Hashear la contraseña
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(password, salt);
@@ -90,6 +77,8 @@ const registerCredentialsController = async (req, res) => {
       '', // resetToken
       '', // resetTokenExpiry
       'Usuario Gratis', // Rol (por defecto)
+      '',
+      '',
     ];
     const success = await appendSheetData(process.env.SPREADSHEET_ID, 'Login', newRow);
 
@@ -118,19 +107,21 @@ const registerProfileController = async (req, res) => {
   try {
     // El email se obtiene del token JWT verificado por el middleware, no del body.
     const { email } = req.user;
-    if (!email) {
-      return res.status(403).json({ message: 'Token inválido o sin email.' });
-    }
-
     // Extraemos los datos del perfil del cuerpo de la petición.
     const { Nombre, Apellido, Telefono, Institucion, Cargo } = req.body;
-
     // Buscamos al usuario para obtener el índice de su fila.
     const result = await findUserByEmail(email);
+
+    if (!email) {
+      return res.status(403).json({ message: 'Token inválido o sin email.' });
+    }        
     if (!result) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
     const { rowIndex } = result;
+    const activationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(activationToken).digest('hex');
+    const tokenExpiry = Date.now() + 600000; // 10 minutos para activar
 
     // --- Actualización de las celdas en Google Sheet ---
     // Creamos un array de promesas para actualizar todas las celdas necesarias.
@@ -141,13 +132,18 @@ const registerProfileController = async (req, res) => {
       updateCell(process.env.SPREADSHEET_ID, 'Login', `F${rowIndex}`, Telefono),
       updateCell(process.env.SPREADSHEET_ID, 'Login', `G${rowIndex}`, Institucion),
       updateCell(process.env.SPREADSHEET_ID, 'Login', `H${rowIndex}`, Cargo),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `I${result.rowIndex}`, hashedToken), // Columna resetToken
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `J${result.rowIndex}`, new Date(tokenExpiry).toISOString()), // Columna resetTokenExpiry
     ];
-
     // `Promise.all` ejecuta todas las promesas en paralelo.
     await Promise.all(updatePromises);
 
-    res.status(200).json({ message: 'Perfil completado exitosamente.' });
+    const backendUrl = process.env.BACKEND_URL;
+    const deepLink = `${backendUrl}/api/redirect?type=verify&token=${activationToken}`;
+    const emailHTML = getActivationEmailHTML(Nombre, deepLink);
+    await sendEmail(email, 'Confirma tu cuenta en Manuales de Contrataciones Públicas', emailHTML);
 
+    res.status(200).json({ success: true, message: 'Perfil guardado. Se ha enviado un correo de confirmación.' });
   } catch (error) {
     console.error('Error en el controlador de completar perfil:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
@@ -161,16 +157,17 @@ const forgotPasswordController = async (req, res) => {
     const result = await findUserByEmail(email);
 
     if (result) {
+      if (!result.user.ID) { // VALIDACIÓN CLAVE
+        return res.status(403).json({ message: 'Debes confirmar tu correo electrónico antes de poder recuperar la contraseña.' });
+      }
       const { user, rowIndex } = result;
-
       // Generar un código OTP de 6 dígitos.
       const otp = generateOtp();
       // El código expira en 10 minutos.
       const otpExpiry = Date.now() + 600000; // 10 minutos en milisegundos
 
-      // EL NUEVO ENLACE APUNTANDO A TU SERVIDOR
-      // (Es recomendable mover esta URL a tu archivo .env como BACKEND_URL)
-      const backendUrl = 'https://manuales2-0-backend.onrender.com';
+      // EL NUEVO ENLACE APUNTANDO AL SERVIDOR DEL BACKEND
+      const backendUrl = process.env.BACKEND_URL;
       const finalLink = `${backendUrl}/api/redirect?otp=${otp}&email=${email}`;
 
       await Promise.all([
@@ -182,10 +179,9 @@ const forgotPasswordController = async (req, res) => {
       const emailHTML = getPasswordResetHTML(user.Nombre || 'usuario', finalLink);
       await sendEmail(email, 'Restablece tu contraseña', emailHTML);
     }
-
-    // Por seguridad, siempre enviamos una respuesta genérica.
-    res.status(200).json({ message: 'Si tu correo está registrado, recibirás un código de recuperación.' });
-
+    
+    // Responder al usuario independientemente de si el correo existe o no.
+    res.status(200).json({ message: 'Si tu correo está registrado y verificado, recibirás un enlace de recuperación.' });
   } catch (error) {
     console.error('Error en el controlador de forgot-password:', error);
     res.status(200).json({ message: 'Si tu correo está registrado, recibirás un código de recuperación.' });
@@ -273,6 +269,29 @@ const verifyOtpController = async (req, res) => {
   }
 };
 
+// --- Controlador para verificar la cuenta ---
+// Este controlador se encarga de activar la cuenta del usuario al hacer clic en el enlace enviado
+const verifyAccountController = async (req, res) => {
+  try {
+    const { token } = req.body;
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    const result = await findRowByValueInColumn('Login', 'resetToken', hashedToken);
+
+    if (!result || new Date(result.user.resetTokenExpiry).getTime() < Date.now()) {
+      return res.status(400).json({ message: 'Token de activación inválido o expirado.' });
+    }
+
+    const newId = crypto.randomUUID();
+    await Promise.all([
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `A${result.rowIndex}`, newId),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `I${result.rowIndex}`, ''), // Limpia el token
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `J${result.rowIndex}`, ''), // Limpia la expiración
+    ]);
+
+    res.status(200).json({ success: true, message: 'Cuenta verificada exitosamente.' });
+  } catch (error) { /* ... */ }
+};
+
 module.exports = {
   loginController,
   registerCredentialsController,
@@ -280,4 +299,5 @@ module.exports = {
   forgotPasswordController,
   resetPasswordController,
   verifyOtpController,
+  verifyAccountController,
 };

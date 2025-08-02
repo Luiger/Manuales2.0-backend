@@ -153,6 +153,45 @@ const findUserByResetToken = async (token) => {
     }
 };
 
+/**
+ * Elimina una fila específica de una hoja de cálculo.
+ * @param {string} spreadsheetId - El ID de la hoja de cálculo.
+ * @param {string} sheetName - El nombre de la hoja.
+ * @param {number} rowIndex - El índice de la fila a eliminar.
+ * @returns {Promise<boolean>}
+ */
+const deleteRow = async (spreadsheetId, sheetName, rowIndex) => {
+  try {
+    // Para obtener el sheetId correcto, que es un número.
+    const sheetMetadata = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheet = sheetMetadata.data.sheets.find(s => s.properties.title === sheetName);
+    if (!sheet) throw new Error(`Hoja "${sheetName}" no encontrada.`);
+    const sheetId = sheet.properties.sheetId;
+
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      requestBody: {
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                startIndex: rowIndex - 1, // Los índices de la API son base 0
+                endIndex: rowIndex,
+              },
+            },
+          },
+        ],
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('Error al eliminar la fila:', error);
+    return false;
+  }
+}; 
+
 module.exports = {
   getSheetData,
   appendSheetData,
@@ -161,4 +200,5 @@ module.exports = {
   findUserByResetToken,
   findRowByValueInColumn,
   sheets, // Se exporta para ser usado en otros servicios
+  deleteRow,
 };
