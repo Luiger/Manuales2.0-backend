@@ -6,9 +6,9 @@ const handleRedirect = (req, res) => {
     let appSchemeUrl = ''; // La dejaremos vacía para llenarla según el caso.
     const fallbackUrl = 'https://universitas.legal/';
 
-    if (!otp || !email || type !== 'verify' || !token) {
+    /*if (!otp || !email ) {
         return res.status(400).send('<h1>Error: Faltan parámetros para la redirección.</h1>');
-    }
+    }*/
 
     // 2. Revisamos qué tipo de enlace hemos recibido.
     // Si la URL contiene 'type=verify' y un 'token', es un enlace de activación.
