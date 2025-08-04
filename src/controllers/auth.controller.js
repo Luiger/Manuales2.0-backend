@@ -77,8 +77,6 @@ const registerCredentialsController = async (req, res) => {
       '', // resetToken
       '', // resetTokenExpiry
       'Usuario Gratis', // Rol (por defecto)
-      '',
-      '',
     ];
     const success = await appendSheetData(process.env.SPREADSHEET_ID, 'Login', newRow);
 
@@ -118,27 +116,26 @@ const registerProfileController = async (req, res) => {
     if (!result) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
-    const { rowIndex } = result;
+    
     const activationToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = crypto.createHash('sha256').update(activationToken).digest('hex');
-    const tokenExpiry = Date.now() + 600000; // 10 minutos para activar
+    const tokenExpiry = Date.now() + 600000; // 10 minutos
 
-    // --- Actualización de las celdas en Google Sheet ---
     // Creamos un array de promesas para actualizar todas las celdas necesarias.
-    // Esto es más eficiente que hacerlo una por una esperando cada vez.
-    const updatePromises = [
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `D${rowIndex}`, Nombre),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `E${rowIndex}`, Apellido),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `F${rowIndex}`, Telefono),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `G${rowIndex}`, Institucion),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `H${rowIndex}`, Cargo),
+    await Promise.all([
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `D${result.rowIndex}`, Nombre),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `E${result.rowIndex}`, Apellido),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `F${result.rowIndex}`, Telefono),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `G${result.rowIndex}`, Institucion),
+      updateCell(process.env.SPREADSHEET_ID, 'Login', `H${result.rowIndex}`, Cargo),
       updateCell(process.env.SPREADSHEET_ID, 'Login', `I${result.rowIndex}`, hashedToken), // Columna resetToken
       updateCell(process.env.SPREADSHEET_ID, 'Login', `J${result.rowIndex}`, new Date(tokenExpiry).toISOString()), // Columna resetTokenExpiry
-    ];
-    // `Promise.all` ejecuta todas las promesas en paralelo.
-    await Promise.all(updatePromises);
+    ]);
 
     const backendUrl = process.env.BACKEND_URL;
+    if (!backendUrl) {
+        throw new Error('La URL del backend no está configurada en el archivo .env');
+    }
     const deepLink = `${backendUrl}/api/redirect?type=verify&token=${activationToken}`;
     const emailHTML = getActivationEmailHTML(Nombre, deepLink);
     await sendEmail(email, 'Confirma tu cuenta en Manuales de Contrataciones Públicas', emailHTML);
