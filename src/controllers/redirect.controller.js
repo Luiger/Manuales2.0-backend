@@ -6,7 +6,7 @@ const handleRedirect = (req, res) => {
     let appSchemeUrl = ''; // La dejaremos vacía para llenarla según el caso.
     const fallbackUrl = 'https://universitas.legal/';
 
-    if (!otp || !email) {
+    if (!otp || !email || type !== 'verify' || !token) {
         return res.status(400).send('<h1>Error: Faltan parámetros para la redirección.</h1>');
     }
 
