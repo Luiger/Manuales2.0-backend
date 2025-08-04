@@ -6,7 +6,7 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
-const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData, deleteRow } = require('../services/sheets.service');
+const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData, deleteRow, findRowByValueInColumn  } = require('../services/sheets.service');
 const { sendEmail, generateOtp, getPasswordResetHTML, getActivationEmailHTML } = require('../services/email.service');
 
 const loginController = async (req, res) => {
@@ -274,7 +274,7 @@ const verifyAccountController = async (req, res) => {
     if (!token) {
             return res.status(400).json({ message: 'Token no proporcionado.' });
         }
-        
+
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const result = await findRowByValueInColumn('Login', 'resetToken', hashedToken);
 
