@@ -271,6 +271,10 @@ const verifyOtpController = async (req, res) => {
 const verifyAccountController = async (req, res) => {
   try {
     const { token } = req.body;
+    if (!token) {
+            return res.status(400).json({ message: 'Token no proporcionado.' });
+        }
+        
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const result = await findRowByValueInColumn('Login', 'resetToken', hashedToken);
 
@@ -286,7 +290,10 @@ const verifyAccountController = async (req, res) => {
     ]);
 
     res.status(200).json({ success: true, message: 'Cuenta verificada exitosamente.' });
-  } catch (error) { /* ... */ }
+  } catch (error) { 
+      console.error('Error en verifyAccountController:', error);
+      res.status(500).json({ message: 'Error interno del servidor.' });
+   }
 };
 
 module.exports = {
