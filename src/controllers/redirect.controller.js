@@ -1,5 +1,3 @@
-// backend/src/controllers/redirect.controller.js
-
 const handleRedirect = (req, res) => {
     // Obtenemos el OTP y el email de los parámetros de la URL
     const { type, token, otp, email } = req.query;
