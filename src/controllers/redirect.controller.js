@@ -52,7 +52,7 @@ const handleRedirect = async (req, res) => {
                 </head>
                 <body>
                     <div class="card">
-                        <div class="logo">UNIVERSITAS Legal</div>
+                        <div class="logo">Manual de Contrataciones</div>
                         <h1 class="title">${statusTitle}</h1>
                         <p class="message">${statusMessage}</p>
                     </div>
