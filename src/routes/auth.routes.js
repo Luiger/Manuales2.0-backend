@@ -11,6 +11,7 @@ const {
   resetPasswordController,
   verifyOtpController,
   verifyAccountController,
+  verifyFromWebController 
 } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
@@ -43,7 +44,9 @@ router.post('/verify-otp', verifyOtpController);
 // Ahora está protegida y usa el token JWT temporal generado por /verify-otp
 router.post('/reset-password', authenticateToken, resetPasswordController);
 // --- Definición de la Ruta para Verificar Cuenta ---
-router.post('/verify-account', verifyAccountController);
+//router.post('/verify-account', verifyAccountController);
+// NUEVA RUTA DE VERIFICACIÓN (usa GET porque se abre desde un enlace)
+//router.get('/verify', verifyFromWebController);
 
 // --- Exportación ---
 // Exportamos el router para poder usarlo en `src/index.js`.

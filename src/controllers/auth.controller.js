@@ -99,7 +99,6 @@ const registerCredentialsController = async (req, res) => {
   }
 };
 
-
 // --- Controlador para el segundo paso del registro (completar perfil) ---
 const registerProfileController = async (req, res) => {
   try {
@@ -153,7 +152,7 @@ const forgotPasswordController = async (req, res) => {
     const { email } = req.body;
     const result = await findUserByEmail(email);
 
-    if (result) {
+    if (result && result.user.ID) {
       if (!result.user.ID) { // VALIDACIÓN CLAVE
         return res.status(403).json({ message: 'Debes confirmar tu correo electrónico antes de poder recuperar la contraseña.' });
       }
@@ -268,6 +267,7 @@ const verifyOtpController = async (req, res) => {
 
 // --- Controlador para verificar la cuenta ---
 // Este controlador se encarga de activar la cuenta del usuario al hacer clic en el enlace enviado
+// Ya no se está usando
 const verifyAccountController = async (req, res) => {
   try {
     const { token } = req.body;
