@@ -10,6 +10,7 @@ const {
   forgotPasswordController,
   resetPasswordController,
   verifyOtpController,
+  registerController,
   verifyAccountController,
   verifyFromWebController 
 } = require('../controllers/auth.controller');
@@ -27,12 +28,12 @@ const router = Router();
 router.post('/login', loginController);
 
 // --- Definición de la Ruta de Registro (Paso 1) ---
-router.post('/register/credentials', registerCredentialsController);
+//router.post('/register/credentials', registerCredentialsController);
 
 // --- Definición de la Ruta de Registro (Paso 2) ---
 // Esta ruta está protegida por el middleware `authenticateToken`.
 // Solo se puede acceder con un token JWT válido (el temporal en este caso).
-router.post('/register/profile', authenticateToken, registerProfileController);
+//router.post('/register/profile', authenticateToken, registerProfileController);
 
 // --- Definición de la Ruta para Solicitar Recuperación de Contraseña ---
 router.post('/forgot-password', forgotPasswordController);
@@ -47,6 +48,8 @@ router.post('/reset-password', authenticateToken, resetPasswordController);
 //router.post('/verify-account', verifyAccountController);
 // NUEVA RUTA DE VERIFICACIÓN (usa GET porque se abre desde un enlace)
 //router.get('/verify', verifyFromWebController);
+// --- Definición de la Ruta de Registro Completo ---
+router.post('/register', registerController);
 
 // --- Exportación ---
 // Exportamos el router para poder usarlo en `src/index.js`.

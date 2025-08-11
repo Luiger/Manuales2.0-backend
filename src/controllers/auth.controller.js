@@ -39,6 +39,62 @@ const loginController = async (req, res) => {
   }
 };
 
+const registerController = async (req, res) => {
+  try {
+    // Recibe TODOS los datos del frontend en una sola petición
+    const { email, password, Nombre, Apellido, Telefono, Institucion, Cargo } = req.body;
+
+    // Lógica para limpiar usuarios expirados (se mantiene)
+    const existingUser = await findUserByEmail(email);
+    if (existingUser) {
+      const isUnverifiedAndExpired = !existingUser.user.ID && new Date(existingUser.user.resetTokenExpiry).getTime() < Date.now();
+      if (isUnverifiedAndExpired) {
+        await deleteRow(process.env.SPREADSHEET_ID, 'Login', existingUser.rowIndex);
+      } else {
+        return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
+      }
+    }
+
+    // Lógica para hashear la contraseña (se mantiene)
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(password, salt);
+
+    // Lógica para el token de activación (se mantiene)
+    const activationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(activationToken).digest('hex');
+    const tokenExpiry = Date.now() + 600000; // 10 minutos
+
+    // Crea la fila completa con todos los datos de una vez
+    const newRow = [
+      '', // ID (se genera al confirmar)
+      email,
+      hashedPassword,
+      Nombre,
+      Apellido,
+      Telefono,
+      Institucion,
+      Cargo,
+      hashedToken, // resetToken (para activación)
+      new Date(tokenExpiry).toISOString(), // resetTokenExpiry
+      'Usuario Gratis', // Rol
+    ];
+    await appendSheetData(process.env.SPREADSHEET_ID, 'Login', newRow);
+
+    // Envía el correo de activación (se mantiene)
+    const backendUrl = process.env.BACKEND_URL;
+    const activationLink = `${backendUrl}/api/redirect?type=verify&token=${activationToken}`;
+    const emailHTML = getActivationEmailHTML(Nombre, activationLink);
+    await sendEmail(email, 'Confirma tu cuenta en Manuales de Contrataciones Públicas', emailHTML);
+
+    res.status(201).json({ success: true, message: 'Registro casi completo. Se ha enviado un correo de confirmación.' });
+
+  } catch (error) {
+    console.error('Error en registerController:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
+/*
 // --- Controlador para el primer paso del registro ---
 const registerCredentialsController = async (req, res) => {
   try {
@@ -144,7 +200,7 @@ const registerProfileController = async (req, res) => {
     console.error('Error en el controlador de completar perfil:', error);
     res.status(500).json({ message: 'Error interno del servidor.' });
   }
-};
+};*/
 
 // --- Controlador para solicitar la recuperación de contraseña ---
 const forgotPasswordController = async (req, res) => {
@@ -298,8 +354,7 @@ const verifyAccountController = async (req, res) => {
 
 module.exports = {
   loginController,
-  registerCredentialsController,
-  registerProfileController,
+  registerController,
   forgotPasswordController,
   resetPasswordController,
   verifyOtpController,
