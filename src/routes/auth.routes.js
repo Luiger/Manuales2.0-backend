@@ -1,18 +1,11 @@
-// --- Explicación del Archivo ---
-// Este archivo define las rutas relacionadas con la autenticación.
-// En este caso, solo tendremos una ruta para el login.
-
 const { Router } = require('express');
 const { 
   loginController, 
-  registerCredentialsController,
-  registerProfileController,
   forgotPasswordController,
   resetPasswordController,
   verifyOtpController,
   registerController,
-  verifyAccountController,
-  verifyFromWebController 
+  refreshTokenController,
 } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
@@ -44,12 +37,12 @@ router.post('/verify-otp', verifyOtpController);
 // --- Definición de la Ruta para Resetear la Contraseña ---
 // Ahora está protegida y usa el token JWT temporal generado por /verify-otp
 router.post('/reset-password', authenticateToken, resetPasswordController);
-// --- Definición de la Ruta para Verificar Cuenta ---
-//router.post('/verify-account', verifyAccountController);
-// NUEVA RUTA DE VERIFICACIÓN (usa GET porque se abre desde un enlace)
-//router.get('/verify', verifyFromWebController);
+
 // --- Definición de la Ruta de Registro Completo ---
 router.post('/register', registerController);
+
+// --- Definición de la Ruta para Refrescar el Token ---
+router.post('/refresh-token', authenticateToken, refreshTokenController);
 
 // --- Exportación ---
 // Exportamos el router para poder usarlo en `src/index.js`.

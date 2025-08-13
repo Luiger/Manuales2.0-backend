@@ -352,6 +352,26 @@ const verifyAccountController = async (req, res) => {
    }
 };
 
+// --- Controlador para refrescar el token ---
+const refreshTokenController = async (req, res) => {
+  try {
+    // El middleware 'authenticateToken' ya nos ha dado los datos del usuario en req.user
+    const userPayload = {
+      id: req.user.id,
+      email: req.user.email,
+      rol: req.user.rol,
+    };
+
+    // Creamos un nuevo token con una nueva hora de expiración
+    const newToken = jwt.sign(userPayload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ success: true, token: newToken });
+  } catch (error) {
+    console.error('Error en refreshTokenController:', error);
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
+
 module.exports = {
   loginController,
   registerController,
@@ -359,4 +379,5 @@ module.exports = {
   resetPasswordController,
   verifyOtpController,
   verifyAccountController,
+  refreshTokenController,
 };
