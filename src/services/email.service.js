@@ -55,44 +55,49 @@ const generateOtp = () => {
 
 // --- Plantilla de Correo para Enviar Código OTP ---
 // `getOtpEmailHTML`: Genera el HTML para el correo con el código de recuperación.
-//    - `otp`: El código de 6 dígitos.
 //    - `name`: El nombre del usuario para personalizar el correo.
-const getPasswordResetHTML = (name, resetLink) => {
+//    - `resetLink`: El enlace para restablecer la contraseña.
+//    - `otp`: El código OTP que se mostrará en el correo.
+const getPasswordResetHTML = (name, resetLink, otp) => {
+  // Creamos los dígitos del OTP con estilos.
+  const otpDigits = otp.split('').map(digit => 
+    `<span style="color: #1d2342; font-weight: bold; font-size: 24px; letter-spacing: 5px;">${digit}</span>`
+  ).join('');
+
   return `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <style>
-      .button:hover {
-        opacity: 0.8;
-      }
-    </style>
-  </head>
-  <body style="font-family: Arial, sans-serif; color: #333; text-align: center; padding: 20px; background-color: #f9f9f9;">
-    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 40px;">
-      <h2 style="color: #1d2342;">Recuperación de Contraseña</h2>
-      <p style="text-align: left;">Hola ${name},</p>
-      <p style="text-align: left;">Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
-      <p style="text-align: left;">Para crear una nueva contraseña, por favor haz clic en el siguiente botón:</p>
-      
-      <a href="${resetLink}" target="_blank" class="button" style="display: inline-block; background-color: #1d2342; color: #ffffff; padding: 15px 25px; margin: 20px 0; text-decoration: none; border-radius: 8px; font-weight: bold;">
-        Crear nueva contraseña
-      </a>
-      
-      <p style="font-size: 12px; color: #777;">Por tu seguridad, este enlace es de un solo uso y expirará en 10 minutos.</p>
-      <p style="font-size: 12px; color: #777; margin-top: 20px;">Si el botón anterior no funciona, por favor copia y pega el siguiente enlace en tu navegador:</p>
-      <p style="font-size: 12px; word-break: break-all;">
-        <a href="${resetLink}" target="_blank" style="color: #1f3c87;">${resetLink}</a>
-      </p>
-      
-      <p style="margin-top: 30px; text-align: left;">Si no solicitaste este cambio, puedes ignorar este correo electrónico sin problemas.</p>
-      <p style="text-align: left;">Saludos,<br>El equipo de Manuales de Contrataciones</p>
-    </div>
-  </body>
-  </html>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style> .button:hover { opacity: 0.8; } </style>
+    </head>
+    <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 40px;">
+        <h2 style="color: #1d2342;">Recuperación de Contraseña</h2>
+        <p>Hola ${name},</p>
+        <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
+        
+        <p>Usa el siguiente código para continuar:</p>
+        <div style="background-color: #f0f0f0; border-radius: 8px; padding: 15px; margin: 20px auto; width: fit-content;">
+          ${otpDigits}
+        </div>
+        
+        <p>O presiona el siguiente botón:</p>
+        <a href="${resetLink}" target="_blank" class="button" style="display: inline-block; background-color: #1d2342; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 8px; font-weight: bold;">
+          Crear nueva contraseña
+        </a>
+        
+        <p style="font-size: 12px; color: #777; margin-top: 20px;">Por tu seguridad, este enlace es de un solo uso y expirará en 10 minutos.</p>
+        <p style="font-size: 12px; color: #777;">Si el botón no funciona, puedes usar el enlace: <a href="${resetLink}" target="_blank" style="color: #1f3c87;">${resetLink}</a></p>
+      </div>
+    </body>
+    </html>
   `;
 };
 
+// --- Plantilla de Correo para Confirmar Cuenta ---
+// `getActivationEmailHTML`: Genera el HTML para el correo de confirmación de cuenta.
+//    - `name`: El nombre del usuario para personalizar el correo.
+//    - `activationLink`: El enlace para activar la cuenta.
 const getActivationEmailHTML = (name, activationLink) => {
   return `
   <!DOCTYPE html>

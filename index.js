@@ -3,12 +3,12 @@ const express = require('express');
 const cors = require('cors'); // Importamos cors
 
 // Importamos las rutas existentes y las nuevas
-const authRoutes = require('./routes/auth.routes'); // Rutas de autenticación
+const authRoutes = require('./src/routes/auth.routes'); // Rutas de autenticación
 // Importamos las nuevas rutas de formularios
-const manualesRoutes = require('./routes/manuales.routes');
-const userRoutes = require('./routes/user.routes'); // Rutas de usuario
-const aiRoutes = require('./routes/ai.routes');
-const redirectRoutes = require('./routes/redirect.routes')
+const manualesRoutes = require('./src/routes/manuales.routes');
+const userRoutes = require('./src/routes/user.routes'); // Rutas de usuario
+const aiRoutes = require('./src/routes/ai.routes');
+const redirectRoutes = require('./src/routes/redirect.routes')
 
 const app = express();
 const port = process.env.PORT || 3000;

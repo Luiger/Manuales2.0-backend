@@ -228,7 +228,7 @@ const forgotPasswordController = async (req, res) => {
       ]);
 
       // Enviar el correo de recuperación con el código OTP.
-      const emailHTML = getPasswordResetHTML(user.Nombre || 'usuario', finalLink);
+      const emailHTML = getPasswordResetHTML(user.Nombre || 'usuario', finalLink, otp);
       await sendEmail(email, 'Restablece tu contraseña', emailHTML);
     }
     
@@ -237,6 +237,10 @@ const forgotPasswordController = async (req, res) => {
   } catch (error) {
     console.error('Error en el controlador de forgot-password:', error);
     res.status(200).json({ message: 'Si tu correo está registrado, recibirás un código de recuperación.' });
+    // Responder con un mensaje genérico para no revelar si el correo existe o no.
+    if (!res.headersSent) {
+      res.status(500).json({ message: 'Error interno del servidor.' });
+    }
   }
 };
 
@@ -292,18 +296,30 @@ const verifyOtpController = async (req, res) => {
 
     const result = await findUserByEmail(email);
     if (!result) {
-      return res.status(400).json({ message: 'Código o correo inválido.' });
+      // Si el correo no existe, el código es inválido por defecto.
+      return res.status(400).json({ message: 'El código ingresado es incorrecto.' });
     }
 
-    const { user } = result;
+    const { user, rowIndex } = result;
+
+    // Comparamos ambos valores como String para evitar errores de tipo de dato.
+    if (String(user.resetToken) !== String(otp)) {
+      return res.status(400).json({ message: 'El código ingresado es incorrecto.' });
+    }
 
     // Verificar si el código OTP coincide y no ha expirado
     const now = Date.now();
     const expiryDate = new Date(user.resetTokenExpiry).getTime();
-    const isValid = user.resetToken === otp && now < expiryDate;
-
-    if (!isValid) {
-      return res.status(400).json({ message: 'Código inválido o expirado.' });
+    // Verificamos si el OTP coincide y si no ha expirado
+    // Si el OTP es incorrecto o ha expirado, respondemos con un error.
+    if (now >= expiryDate) {
+        // Limpia los datos expirados de la base de datos.
+        await Promise.all([
+            updateCell(process.env.SPREADSHEET_ID, 'Login', `I${rowIndex}`, ''), // Borra resetToken
+            updateCell(process.env.SPREADSHEET_ID, 'Login', `J${rowIndex}`, ''), // Borra resetTokenExpiry
+        ]);
+        
+        return res.status(400).json({ message: 'Tu código ha expirado, solicita otro.' });
     }
 
     // Generar un token temporal para autorizar el reseteo de contraseña
