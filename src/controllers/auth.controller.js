@@ -18,7 +18,7 @@ const loginController = async (req, res) => {
       return res.status(400).json({ message: 'El correo y la contraseña son requeridos.' });
     }    
     if (!result) {
-      return res.status(401).json({ message: 'Credenciales inválidas.' });
+      return res.status(401).json({ message: 'Credenciales inválidas. Sin conexión.' });
     }
 
     const { user } = result;
@@ -94,114 +94,6 @@ const registerController = async (req, res) => {
   }
 };
 
-/*
-// --- Controlador para el primer paso del registro ---
-const registerCredentialsController = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    const existingUser = await findUserByEmail(email);
-
-    if (!email || !password) {
-      return res.status(400).json({ message: 'El correo y la contraseña son requeridos.' });
-    }
-
-    if (existingUser) {
-      // Si el usuario existe pero no está verificado (no tiene ID) y su token expiró
-      const isUnverifiedAndExpired = !existingUser.user.ID && new Date(existingUser.user.resetTokenExpiry).getTime() < Date.now();
-      if (isUnverifiedAndExpired) {
-        // Limpiamos el registro antiguo para permitir que el usuario se registre de nuevo
-        await deleteRow(process.env.SPREADSHEET_ID, 'Login', existingUser.rowIndex);
-      } else {
-        return res.status(409).json({ message: 'El correo electrónico ya está registrado.' });
-      }
-    }
-    // Hashear la contraseña
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync(password, salt);
-
-    // Añadir el nuevo usuario al Google Sheet
-    // Dejamos los otros campos vacíos por ahora
-    const newRow = [
-      '', // ID (se genera en el primer login)
-      email,
-      hashedPassword,
-      '', // Nombre
-      '', // Apellido
-      '', // Teléfono
-      '', // Institución
-      '', // Cargo
-      '', // resetToken
-      '', // resetTokenExpiry
-      'Usuario Gratis', // Rol (por defecto)
-    ];
-    const success = await appendSheetData(process.env.SPREADSHEET_ID, 'Login', newRow);
-
-    if (!success) {
-      return res.status(500).json({ message: 'Error al registrar el usuario.' });
-    }
-
-    // Generar un token temporal para el siguiente paso
-    const payload = { email, step: 'profile_completion' };
-    const tempToken = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '15m' }); // Token válido por 15 minutos
-
-    res.status(201).json({
-      message: 'Credenciales registradas. Por favor, completa tu perfil.',
-      tempToken,
-    });
-
-  } catch (error) {
-    console.error('Error en el controlador de registro de credenciales:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-};
-
-// --- Controlador para el segundo paso del registro (completar perfil) ---
-const registerProfileController = async (req, res) => {
-  try {
-    // El email se obtiene del token JWT verificado por el middleware, no del body.
-    const { email } = req.user;
-    // Extraemos los datos del perfil del cuerpo de la petición.
-    const { Nombre, Apellido, Telefono, Institucion, Cargo } = req.body;
-    // Buscamos al usuario para obtener el índice de su fila.
-    const result = await findUserByEmail(email);
-
-    if (!email) {
-      return res.status(403).json({ message: 'Token inválido o sin email.' });
-    }        
-    if (!result) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
-    }
-    
-    const activationToken = crypto.randomBytes(32).toString('hex');
-    const hashedToken = crypto.createHash('sha256').update(activationToken).digest('hex');
-    const tokenExpiry = Date.now() + 600000; // 10 minutos
-
-    // Creamos un array de promesas para actualizar todas las celdas necesarias.
-    await Promise.all([
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `D${result.rowIndex}`, Nombre),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `E${result.rowIndex}`, Apellido),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `F${result.rowIndex}`, Telefono),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `G${result.rowIndex}`, Institucion),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `H${result.rowIndex}`, Cargo),
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `I${result.rowIndex}`, hashedToken), // Columna resetToken
-      updateCell(process.env.SPREADSHEET_ID, 'Login', `J${result.rowIndex}`, new Date(tokenExpiry).toISOString()), // Columna resetTokenExpiry
-    ]);
-
-    const backendUrl = process.env.BACKEND_URL;
-    if (!backendUrl) {
-        throw new Error('La URL del backend no está configurada en el archivo .env');
-    }
-    const deepLink = `${backendUrl}/api/redirect?type=verify&token=${activationToken}`;
-    const emailHTML = getActivationEmailHTML(Nombre, deepLink);
-    await sendEmail(email, 'Confirma tu cuenta en Manuales de Contrataciones Públicas', emailHTML);
-
-    res.status(200).json({ success: true, message: 'Perfil guardado. Se ha enviado un correo de confirmación.' });
-  } catch (error) {
-    console.error('Error en el controlador de completar perfil:', error);
-    res.status(500).json({ message: 'Error interno del servidor.' });
-  }
-};*/
-
 // --- Controlador para solicitar la recuperación de contraseña ---
 const forgotPasswordController = async (req, res) => {
   try {
@@ -243,7 +135,6 @@ const forgotPasswordController = async (req, res) => {
     }
   }
 };
-
 
 // --- Controlador para resetear la contraseña ---
 const resetPasswordController = async (req, res) => {

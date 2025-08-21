@@ -49,34 +49,40 @@ const updateUserRole = async (req, res) => {
 };
 
 const verifyPasswordController = async (req, res) => {
-    try {
-        const { currentPassword } = req.body;
-        if (!currentPassword) {
-            return res.status(400).json({ message: 'La contraseña actual es requerida.' });
-        }
-        const isMatch = await userService.verifyCurrentPassword(req.user.email, currentPassword);
-        if (!isMatch) {
-            return res.status(401).json({ success: false, message: 'La contraseña actual es incorrecta.' });
-        }
-        res.json({ success: true, message: 'Contraseña verificada.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error interno del servidor.' });
+  try {
+    const { currentPassword } = req.body;
+    if (!currentPassword) {
+      return res.status(400).json({ message: 'La contraseña actual es requerida.' });
     }
+    const isMatch = await userService.verifyCurrentPassword(req.user.email, currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'La contraseña actual es incorrecta.' });
+    }
+    res.json({ success: true, message: 'Contraseña verificada.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
 };
 
 const changePasswordController = async (req, res) => {
-    try {
-        const { newPassword } = req.body;
-        if (!newPassword) {
-            return res.status(400).json({ message: 'La nueva contraseña es requerida.' });
-        }
-        await userService.changePassword(req.user.email, newPassword);
-        res.json({ success: true, message: 'Contraseña cambiada exitosamente.' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error interno del servidor.' });
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword) {
+      return res.status(400).json({ message: 'La nueva contraseña es requerida.' });
     }
-};
+    // Llama al servicio y espera el resultado
+    const result = await userService.changePassword(req.user.email, newPassword);
 
+    if (result.success) {
+      res.json({ success: true, message: 'Contraseña cambiada exitosamente.' });
+    } else {
+      // Si la contraseña es la misma, envía un error 409 (Conflicto)
+      res.status(409).json({ success: false, message: result.error });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error interno del servidor.' });
+  }
+};
 module.exports = {
   getProfile,
   updateProfile,

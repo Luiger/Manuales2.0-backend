@@ -78,14 +78,24 @@ const verifyCurrentPassword = async (email, currentPassword) => {
  */
 const changePassword = async (email, newPassword) => {
     const result = await findUserByEmail(email);
-    if (!result) return false;
+    if (!result) {
+        // Este caso es poco probable si el token es válido, pero es una buena salvaguarda.
+        return { success: false, error: 'Usuario no encontrado.' };
+    }
+    
+    // Verificamos si la nueva contraseña es igual a la actual.
+    const isSamePassword = bcrypt.compareSync(newPassword, result.user.Contraseña);
+    if (isSamePassword) {
+        return { success: false, error: 'La nueva contraseña no puede ser igual a la actual.' };
+    }
 
+    // Si es diferente, procedemos a hashear y actualizar.
     const { rowIndex } = result;
     const salt = bcrypt.genSaltSync(10);
     const hashedPassword = bcrypt.hashSync(newPassword, salt);
 
-    await updateCell(process.env.SPREADSHEET_ID, 'Login', `${COLUMNS.PASSWORD}${rowIndex}`, hashedPassword);
-    return true;
+    await updateCell(process.env.SPREADSHEET_ID, 'Login', `C${rowIndex}`, hashedPassword);
+    return { success: true };
 };
 
 const getAllUsers = async () => {
