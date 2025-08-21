@@ -1,5 +1,5 @@
 const crypto = require('crypto');
-const { updateCell, findRowByValueInColumn } = require('../services/sheets.service');
+const { updateCell, findRowByValueInColumn, findUserByEmail } = require('../services/sheets.service');
 
 const handleRedirect = async (req, res) => {
     const { type, token, otp, email } = req.query;
@@ -79,10 +79,34 @@ const handleRedirect = async (req, res) => {
     }
     // --- Caso 2: RECUPERAR CONTRASEÑA (Redirección Simple) ---
     else if (otp && email) {
-        const appSchemeUrl = `manualesapp://forgot-password?otp=${otp}&email=${email}`;
-        const htmlRedirect = `
-            <!DOCTYPE html><html><head><title>Redirigiendo...</title><script type="text/javascript">window.onload = function() { window.location.href = "${appSchemeUrl}"; setTimeout(function() { window.location.href = "${fallbackUrl}"; }, 500); };</script></head><body><p>Redirigiendo a la aplicación...</p></body></html>`;
-        return res.set('Content-Type', 'text/html').send(Buffer.from(htmlRedirect));
+        try {
+            const result = await findUserByEmail(email);
+
+            // VALIDAMOS EL TOKEN ANTES DE REDIRIGIR
+            // Si el usuario no existe o el token en la base de datos está vacío (ya fue usado),
+            // mostramos una página de error/informativa.
+            if (!result || !result.user.resetToken) {
+                const statusTitle = 'Enlace Inválido';
+                const statusMessage = 'Este enlace de recuperación de contraseña ya ha sido utilizado o ha expirado. Por favor, solicita uno nuevo si lo necesitas.';
+                
+                const htmlResponse = `
+                    <!DOCTYPE html><html><head><title>${statusTitle}</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:sans-serif;text-align:center;padding:40px 20px;} .container{max-width:500px;margin:auto;background-color:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);} h1{color:#1d2342;}</style></head><body><div class="container"><h1>${statusTitle}</h1><p>${statusMessage}</p></div></body></html>`;
+                
+                return res.set('Content-Type', 'text/html').send(Buffer.from(htmlResponse));
+            }
+
+            // SI EL TOKEN ES VÁLIDO, REDIRIGIMOS A LA APP
+            // Esta parte solo se ejecuta si el token existe en la base de datos.
+            const appSchemeUrl = `manualesapp://forgot-password?otp=${otp}&email=${email}`;
+            const htmlRedirect = `
+                <!DOCTYPE html><html><head><title>Redirigiendo...</title><script type="text/javascript">window.onload = function() { window.location.href = "${appSchemeUrl}"; setTimeout(function() { window.location.href = "${fallbackUrl}"; }, 500); };</script></head><body><p>Redirigiendo a la aplicación...</p></body></html>`;
+            
+            return res.set('Content-Type', 'text/html').send(Buffer.from(htmlRedirect));
+
+        } catch (error) {
+            console.error('Error en la redirección de reseteo:', error);
+            return res.status(500).send('<h1>Error del Servidor</h1>');
+        }
     }
     // --- Caso 3: Error de Parámetros ---
     else {
