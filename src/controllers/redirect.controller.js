@@ -90,7 +90,28 @@ const handleRedirect = async (req, res) => {
                 const statusMessage = 'Este enlace de recuperación de contraseña ya ha sido utilizado o ha expirado. Por favor, solicita uno nuevo si lo necesitas.';
                 
                 const htmlResponse = `
-                    <!DOCTYPE html><html><head><title>${statusTitle}</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:sans-serif;text-align:center;padding:40px 20px;} .container{max-width:500px;margin:auto;background-color:#fff;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);} h1{color:#1d2342;}</style></head><body><div class="container"><h1>${statusTitle}</h1><p>${statusMessage}</p></div></body></html>`;
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>${statusTitle}</title>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <style>
+                            body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #f1f2f6; }
+                            .card { text-align: center; background-color: #ffffff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px; }
+                            .logo { font-size: 24px; font-weight: bold; color: #1d2342; margin-bottom: 20px; }
+                            .title { font-size: 22px; font-weight: bold; color: #1c2025; margin-bottom: 10px; }
+                            .message { font-size: 16px; color: #374151; line-height: 1.5; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="card">
+                            <div class="logo">Manual de Contrataciones</div>
+                            <h1 class="title">${statusTitle}</h1>
+                            <p class="message">${statusMessage}</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
                 
                 return res.set('Content-Type', 'text/html').send(Buffer.from(htmlResponse));
             }
