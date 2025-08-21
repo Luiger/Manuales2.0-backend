@@ -14,6 +14,12 @@ const getProfile = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
+    const { Nombre, Apellido, Telefono, Institucion, Cargo } = req.body;
+    if (!Nombre || !Apellido || !Telefono || !Institucion || !Cargo) {
+      // Si algún campo viene vacío, se rechaza la petición.
+      return res.status(400).json({ message: 'Todos los campos son requeridos.' });
+    }
+    // Llama al servicio y espera el resultado
     const success = await userService.updateProfileByEmail(req.user.email, req.body);
     if (!success) {
       return res.status(404).json({ message: 'Usuario no encontrado para actualizar.' });
