@@ -34,7 +34,7 @@ const sendEmail = async (to, subject, html) => {
     await transporter.sendMail({
       // `from`: La dirección desde la que se envía el correo.
       // Es buena práctica incluir el nombre de tu aplicación.
-      from: `"Manuales de Contrataciones" <${process.env.EMAIL_USER}>`,
+      from: `"Universitas" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       html,
@@ -72,7 +72,7 @@ const getPasswordResetHTML = (name, resetLink, otp) => {
     </head>
     <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
       <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 40px;">
-        <h2 style="color: #1d2342;">Recuperación de Contraseña</h2>
+        <h2 style="color: #1d2342;">Restablecer contraseña</h2>
         <p>Hola ${name},</p>
         <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta.</p>
         
@@ -106,7 +106,7 @@ const getActivationEmailHTML = (name, activationLink) => {
     <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px;">
       <h2 style="color: #1d2342;">Confirma tu cuenta</h2>
       <p style="text-align: left;">¡Hola, ${name}!</p>
-      <p style="text-align: left;">Bienvenido a la plataforma de Manuales de Contrataciones Públicas de Universitas.</p>
+      <p style="text-align: left;">Te damos la bienvenida a la aplicación de elaboración de Manuales de Contrataciones Públicas de Universitas.</p>
       <p style="text-align: left;">Para completar tu registro y asegurar tu cuenta, solo necesitas hacer clic en el siguiente botón:</p>
       <a href="${activationLink}" target="_blank" style="display: inline-block; background-color: #1d2342; color: #ffffff; padding: 15px 25px; margin: 20px 0; text-decoration: none; border-radius: 8px; font-weight: bold;">
         Activar mi cuenta
