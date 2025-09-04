@@ -348,7 +348,7 @@ const confirmAccountDeletionController = async (req, res) => {
             </head>
             <body>
                 <div class="card">
-                    <div class="logo">UNIVERSITAS Legal</div>
+                    <div class="logo">Universitas Legal</div>
                     <h1 class="title">Cuenta Eliminada</h1>
                     <p class="message">Tu cuenta y todos tus datos asociados han sido eliminados exitosamente de nuestra plataforma.</p>
                 </div>
