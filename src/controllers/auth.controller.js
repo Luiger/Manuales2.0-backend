@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { findUserByEmail, updateCell, findUserByResetToken, appendSheetData, deleteRow, findRowByValueInColumn  } = require('../services/sheets.service');
-const { sendEmail, generateOtp, getPasswordResetHTML, getActivationEmailHTML } = require('../services/email.service');
+const { sendEmail, generateOtp, getPasswordResetHTML, getActivationEmailHTML, getDeletionEmailHTML } = require('../services/email.service');
 
 const loginController = async (req, res) => {
   try {
@@ -279,6 +279,90 @@ const refreshTokenController = async (req, res) => {
   }
 };
 
+// --- Controladores para eliminación de cuenta ---
+const requestAccountDeletionController = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const result = await findUserByEmail(email);
+
+        // Solo procedemos si el usuario existe
+        if (result && result.user.ID) {
+            const { user, rowIndex } = result;
+            const deletionToken = crypto.randomBytes(32).toString('hex');
+            const hashedToken = crypto.createHash('sha256').update(deletionToken).digest('hex');
+            const tokenExpiry = Date.now() + 3600000; // 1 hora para confirmar
+
+            // Guarda el token en las nuevas columnas L y M
+            await Promise.all([
+                updateCell(process.env.SPREADSHEET_ID, 'Login', `L${rowIndex}`, hashedToken),
+                updateCell(process.env.SPREADSHEET_ID, 'Login', `M${rowIndex}`, new Date(tokenExpiry).toISOString()),
+            ]);
+
+            // Envía el correo de confirmación
+            const backendUrl = process.env.BACKEND_URL;
+            const confirmationLink = `${backendUrl}/api/auth/confirm-deletion?token=${deletionToken}`;
+            
+            // (Necesitarás crear una nueva plantilla de correo 'getDeletionEmailHTML' en email.service.js)
+            const emailHTML = getDeletionEmailHTML(user.Nombre, confirmationLink);
+            await sendEmail(email, 'Confirmación para eliminar tu cuenta', emailHTML);
+        }
+        
+        // Siempre enviamos una respuesta genérica por seguridad
+        res.status(200).json({ message: 'Si tu correo está registrado, recibirás un enlace para confirmar la eliminación.' });
+
+    } catch (error) {
+        console.error('Error en requestAccountDeletionController:', error);
+        res.status(500).json({ message: 'Error interno del servidor.' });
+    }
+};
+
+// --- Controlador para confirmación de eliminación de cuenta ---
+const confirmAccountDeletionController = async (req, res) => {
+    try {
+        const { token } = req.query;
+        const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+        const result = await findRowByValueInColumn('Login', 'deletionToken', hashedToken);
+
+        if (!result || new Date(result.user.deletionTokenExpiry).getTime() < Date.now()) {  
+            const errorHtml = `
+                <!DOCTYPE html><html><head><title>Enlace Inválido</title><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{margin:0;font-family:sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background-color:#f1f2f6;}.card{text-align:center;background-color:#fff;padding:40px 30px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.1);max-width:400px;margin:20px;}h1{color:#1d2342;font-size:22px;}p{font-size:16px;color:#374151;}</style></head><body><div class="card"><h1>Enlace inválido o expirado</h1><p>Este enlace ya no es válido. Si deseas eliminar tu cuenta, por favor inicia el proceso de nuevo.</p></div></body></html>`;
+            return res.status(400).send(Buffer.from(errorHtml));
+        }
+
+        await deleteRow(process.env.SPREADSHEET_ID, 'Login', result.rowIndex);
+        // Página confirmando la eliminación
+        const successHtml = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Cuenta Eliminada</title>
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <style>
+                    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: #f1f2f6; }
+                    .card { text-align: center; background-color: #ffffff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); max-width: 400px; margin: 20px; }
+                    .logo { font-size: 24px; font-weight: bold; color: #1d2342; margin-bottom: 20px; }
+                    .title { font-size: 22px; font-weight: bold; color: #1c2025; margin-bottom: 10px; }
+                    .message { font-size: 16px; color: #374151; line-height: 1.5; }
+                </style>
+            </head>
+            <body>
+                <div class="card">
+                    <div class="logo">UNIVERSITAS Legal</div>
+                    <h1 class="title">Cuenta Eliminada</h1>
+                    <p class="message">Tu cuenta y todos tus datos asociados han sido eliminados exitosamente de nuestra plataforma.</p>
+                </div>
+            </body>
+            </html>
+        `;
+        res.set('Content-Type', 'text/html').send(Buffer.from(successHtml));
+
+    } catch (error) {
+        console.error('Error en confirmAccountDeletionController:', error);
+        res.status(500).send('<h1>Error del Servidor</h1>');
+    }
+};
+
 module.exports = {
   loginController,
   registerController,
@@ -287,4 +371,6 @@ module.exports = {
   verifyOtpController,
   verifyAccountController,
   refreshTokenController,
+  requestAccountDeletionController,
+  confirmAccountDeletionController,
 };

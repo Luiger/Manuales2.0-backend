@@ -121,9 +121,43 @@ const getActivationEmailHTML = (name, activationLink) => {
   `;
 };
 
+// --- Plantilla de Correo para Confirmar Eliminación de Cuenta ---
+// `getDeletionEmailHTML`: Genera el HTML para el correo de confirmación de eliminación de cuenta.
+//    - `name`: El nombre del usuario para personalizar el correo.
+//    - `confirmationLink`: El enlace para confirmar la eliminación de la cuenta.
+const getDeletionEmailHTML = (name, confirmationLink) => {
+  return `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <style> .button:hover { opacity: 0.8; } </style>
+  </head>
+  <body style="font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f9f9f9;">
+    <div style="max-width: 600px; margin: auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 40px;">
+      <h2 style="color: #1d2342;">Confirmación de Eliminación de Cuenta</h2>
+      <p style="text-align: left;">Hola ${name},</p>
+      <p style="text-align: left;">Hemos recibido una solicitud para eliminar permanentemente tu cuenta y todos los datos asociados de la plataforma Manuales de Contrataciones Públicas.</p>
+      <p style="text-align: left;">Si tú iniciaste esta solicitud, por favor haz clic en el siguiente botón para confirmar. Esta acción es irreversible.</p>
+      
+      <a href="${confirmationLink}" target="_blank" class="button" 
+        style="display: inline-block; background-color: #e73746; color: #ffffff; padding: 15px 25px; margin: 20px 0; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; line-height: 1.4;">
+        Eliminar mi cuenta permanentemente
+      </a>
+      
+      <p style="font-size: 12px; color: #777;">Este enlace de confirmación es de un solo uso y expirará en 1 hora.</p>
+      
+      <p style="margin-top: 30px; text-align: left;">Si no solicitaste esta eliminación, puedes ignorar este correo electrónico de forma segura. No se realizará ninguna acción en tu cuenta.</p>
+      <p style="text-align: left;">Saludos,<br>El equipo de Universitas</p>
+    </div>
+  </body>
+  </html>
+  `;
+};
+
 module.exports = {
   sendEmail,
   generateOtp,
   getPasswordResetHTML,
   getActivationEmailHTML,
+  getDeletionEmailHTML,
 };

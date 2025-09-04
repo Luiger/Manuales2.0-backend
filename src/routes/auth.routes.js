@@ -6,6 +6,8 @@ const {
   verifyOtpController,
   registerController,
   refreshTokenController,
+  requestAccountDeletionController, 
+  confirmAccountDeletionController 
 } = require('../controllers/auth.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
@@ -43,6 +45,11 @@ router.post('/register', registerController);
 
 // --- Definición de la Ruta para Refrescar el Token ---
 router.post('/refresh-token', authenticateToken, refreshTokenController);
+
+// --- Definición de la Ruta para Solicitar Eliminación de Cuenta ---
+router.post('/request-deletion', requestAccountDeletionController);
+// --- Definición de la Ruta para Confirmar Eliminación de Cuenta ---
+router.get('/confirm-deletion', confirmAccountDeletionController);
 
 // --- Exportación ---
 // Exportamos el router para poder usarlo en `src/index.js`.
