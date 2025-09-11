@@ -18,7 +18,7 @@ const loginController = async (req, res) => {
       return res.status(400).json({ message: 'El correo y la contraseña son requeridos.' });
     }    
     if (!result) {
-      return res.status(401).json({ message: 'Credenciales inválidas. Sin conexión.' });
+      return res.status(401).json({ message: 'Credenciales inválidas.' });
     }
 
     const { user } = result;
