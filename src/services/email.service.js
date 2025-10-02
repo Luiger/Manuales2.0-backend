@@ -6,12 +6,13 @@ const { Resend } = require('resend');
 // --- Configuración del Cliente de Resend ---
 // Utiliza la variable de entorno RESEND_API_KEY.
 const resend = new Resend(process.env.RESEND_API_KEY);
+const fromEmail = process.env.FROM_EMAIL;
 
 // --- Función para Enviar Correo ---
 const sendEmail = async (to, subject, html) => {
   try {
     const { data, error } = await resend.emails.send({
-      from: process.env.FROM_EMAIL, 
+      from: `Universitas <${fromEmail}>`,
       to,
       subject,
       html,
