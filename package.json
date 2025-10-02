@@ -19,7 +19,7 @@
     "express": "^5.1.0",
     "googleapis": "^150.0.1",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.14",
+    "resend": "^6.1.2",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

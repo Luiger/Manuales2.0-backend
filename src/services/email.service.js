@@ -1,48 +1,33 @@
-// --- Explicación del Archivo ---
 // Este servicio encapsula toda la lógica para el envío de correos electrónicos
-// utilizando la librería Nodemailer y el servicio SMTP de Gmail.
+// utilizando la librería Resend y su API.
 
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// --- Configuración del Transportador de Nodemailer ---
-// `transporter`: Es el objeto que se encargará de enviar los correos.
-// Lo configuramos una vez y lo reutilizamos en toda la aplicación.
-const transporter = nodemailer.createTransport({
-  // `host`: El servidor SMTP de Gmail.
-  host: process.env.EMAIL_HOST,
-  // `port`: El puerto estándar para conexiones seguras (SSL/TLS).
-  port: 465,
-  // `secure`: `true` porque estamos usando el puerto 465, que requiere una conexión segura.
-  secure: true,
-  // `auth`: Aquí van las credenciales de la cuenta de Gmail.
-  auth: {
-    // `user`: Tu dirección de correo de Gmail, cargada desde las variables de entorno.
-    user: process.env.EMAIL_USER,
-    // `pass`: Tu "Contraseña de aplicación" de Google, también desde las variables de entorno.
-    pass: process.env.EMAIL_PASS,
-  },
-});
+// --- Configuración del Cliente de Resend ---
+// Utiliza la variable de entorno RESEND_API_KEY.
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // --- Función para Enviar Correo ---
-// `sendEmail`: Una función asíncrona que toma los detalles del correo y lo envía.
-//    - `to`: La dirección de correo del destinatario.
-//    - `subject`: El asunto del correo.
-//    - `html`: El contenido del correo en formato HTML.
 const sendEmail = async (to, subject, html) => {
   try {
-    // `await transporter.sendMail(...)`: Envía el correo usando la configuración del transportador.
-    await transporter.sendMail({
-      // `from`: La dirección desde la que se envía el correo.
-      // Es buena práctica incluir el nombre de tu aplicación.
-      from: `"Universitas" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: process.env.FROM_EMAIL, 
       to,
       subject,
       html,
     });
-    console.log('Correo enviado exitosamente a:', to);
+
+    // Si la API de Resend devuelve un error, lo manejamos.
+    if (error) {
+      console.error('Error al enviar el correo desde Resend:', error);
+      return false;
+    }
+
+    console.log('Correo enviado exitosamente a:', to, 'con ID:', data.id);
     return true;
+
   } catch (error) {
-    // Si ocurre un error durante el envío, lo capturamos y lo mostramos en la consola.
+    // Si ocurre un error de red o de otro tipo, lo capturamos.
     console.error('Error al enviar el correo:', error);
     return false;
   }
